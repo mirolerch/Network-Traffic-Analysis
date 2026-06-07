@@ -44,7 +44,7 @@ This investigation demonstrates that **encrypted traffic is not opaque to a trai
 
 ## Investigation Walkthrough
 
-### Phase 1 — SSL/TLS Traffic Isolation
+### Phase 1 - SSL/TLS Traffic Isolation
 
 **Objective:** Isolate all SSL/TLS traffic from the full capture.
 
@@ -58,7 +58,7 @@ tshark -Y 'ssl' -r HTTPS_traffic.pcap
 
 ---
 
-### Phase 2 — TLS Handshake Source/Destination Mapping
+### Phase 2 - TLS Handshake Source/Destination Mapping
 
 **Objective:** Map all endpoints participating in TLS handshakes.
 
@@ -79,7 +79,7 @@ tshark -r HTTPS_traffic.pcap -Y "ssl.handshake" -Tfields -e ip.src -e ip.dst
 
 ---
 
-### Phase 3 — Certificate Issuer Extraction
+### Phase 3 - Certificate Issuer Extraction
 
 **Objective:** Identify the certificate authorities (CAs) and organizations behind the SSL sessions.
 
@@ -101,7 +101,7 @@ tshark -r HTTPS_traffic.pcap -Y "ssl.handshake.certificate" -Tfields -e x509sat.
 
 ---
 
-### Phase 4 — Server IP Enumeration via Client Hello
+### Phase 4 - Server IP Enumeration via Client Hello
 
 **Objective:** List all external servers the internal network established SSL connections to, using the Client Hello as the initiating signal.
 
@@ -128,7 +128,7 @@ tshark -r HTTPS_traffic.pcap -Y "ssl && ssl.handshake.type==1" -Tfields -e ip.ds
 
 ---
 
-### Phase 5 — DNS Query Analysis
+### Phase 5 - DNS Query Analysis
 
 **Objective:** Identify DNS servers used by internal clients.
 
@@ -149,7 +149,7 @@ tshark -r HTTPS_traffic.pcap -Y "dns && dns.flags.response==0" -Tfields -e ip.ds
 
 ---
 
-### Phase 6 — Ask Ubuntu Server Identification
+### Phase 6 - Ask Ubuntu Server Identification
 
 **Objective:** Identify the IP addresses of Ask Ubuntu (askubuntu.com) servers and the internal user who contacted them.
 
@@ -178,7 +178,7 @@ tshark -r HTTPS_traffic.pcap -Y "ip.dst==151.101.1.69 || ip.dst==151.101.193.69 
 
 ---
 
-### Phase 7 — Antivirus Software Fingerprinting via Traffic Content
+### Phase 7 - Antivirus Software Fingerprinting via Traffic Content
 
 **Objective:** Identify hosts running Avast Antivirus through traffic content matching.
 
