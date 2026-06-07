@@ -33,7 +33,7 @@ This investigation demonstrates that **encrypted traffic is not opaque to a trai
 
 | Field | Value |
 |---|---|
-| Scenario Type | Network Forensics — Encrypted Traffic Analysis |
+| Scenario Type | Network Forensics - Encrypted Traffic Analysis |
 | Traffic Type | HTTPS / TLS 1.2 |
 | Capture File | HTTPS_traffic.pcap |
 | Analysis Tool | tshark (Wireshark CLI) |
