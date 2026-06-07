@@ -54,7 +54,7 @@ tshark -Y 'ssl' -r HTTPS_traffic.pcap
 
 **Finding:** Packets containing TLS 1.2 sessions were returned, including `Client Hello`, `Server Hello`, `Certificate`, `Change Cipher Spec`, `Application Data`, and `Encrypted Alert` messages. This confirms active TLS sessions between internal hosts and external servers.
 
-**Analyst Note:** Even without decrypting the payload, the TLS record types alone reveal session lifecycle — useful for detecting incomplete handshakes (potential scanning), unexpected `Encrypted Alert` messages (connection tears that may indicate detection evasion), and unusual handshake timing.
+**Analyst Note:** Even without decrypting the payload, the TLS record types alone reveal session lifecycle - useful for detecting incomplete handshakes (potential scanning), unexpected `Encrypted Alert` messages (connection tears that may indicate detection evasion), and unusual handshake timing.
 
 ![SSL Traffic Isolation](screenshots/01_ssl_traffic_isolation.png)
 
