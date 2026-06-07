@@ -1,31 +1,31 @@
 # SOC Investigation Report
 ## Case ID: NTA-2026-HTTPS-001
-## Network Traffic Analysis - Encrypted HTTPS Traffic Investigation
+## Network Traffic Analysis — Encrypted HTTPS Traffic Investigation
 
 ---
 
-> **Classification:** TLP:WHITE - Portfolio / Training Exercise  
-> **Analyst:** Miroslaw Lerch  
-> **Platform:** AttackDefense Labs (PentesterAcademy)  
-> **Lab:** Filtering Advanced: HTTPS  
-> **Date:** 2026  
-> **Status:** CLOSED - Analysis Complete
+> **Classification:** TLP:WHITE — Portfolio / Training Exercise
+> **Analyst:** Miro Lerch
+> **Platform:** AttackDefense Labs (PentesterAcademy)
+> **Lab:** Filtering Advanced: HTTPS
+> **Date:** 2026
+> **Status:** CLOSED — Analysis Complete
 
 ---
 
 ## Executive Summary
 
-During a scheduled network traffic review exercise, a PCAP capture (`HTTPS_traffic.pcap`) containing encrypted HTTPS/TLS sessions was analyzed using `tshark` to extract actionable intelligence from encrypted traffic metadata. Although HTTPS encrypts the payload, significant forensic value remains accessible through TLS handshake metadata, DNS query patterns, certificate issuer fields, and behavioral fingerprinting.
+Während einer geplanten Netzwerkverkehrs-Analyse wurde eine PCAP-Aufzeichnung (`HTTPS_traffic.pcap`) mit verschlüsselten HTTPS/TLS-Sitzungen mithilfe von `tshark` untersucht, um verwertbare Informationen aus den Metadaten des verschlüsselten Datenverkehrs zu extrahieren. Obwohl HTTPS den Payload verschlüsselt, sind durch TLS-Handshake-Metadaten, DNS-Abfragemuster, Zertifikatsaussteller-Felder und Verhaltens-Fingerprinting weiterhin bedeutende forensische Erkenntnisse zugänglich.
 
-This investigation demonstrates that **encrypted traffic is not opaque to a trained SOC analyst**. Through disciplined filtering and field extraction, the following was determined:
+Diese Untersuchung zeigt, dass verschlüsselter Datenverkehr für einen erfahrenen SOC-Analysten nicht undurchsichtig ist. Durch gezieltes Filtern und Feldextraktion wurden folgende Erkenntnisse gewonnen:
 
-- Multiple SSL/TLS sessions to external servers were identified and mapped
-- DNS resolution patterns revealed internal client behavior and server infrastructure
-- Certificate issuer chains exposed the identity of contacted services
-- Avast Antivirus traffic was identified across three internal hosts via behavioral fingerprinting
-- The internal host `192.168.10.9` was confirmed as the sole user interacting with Ask Ubuntu servers
+- Mehrere SSL/TLS-Sitzungen zu externen Servern wurden identifiziert und kartiert
+- DNS-Auflösungsmuster enthüllten das Verhalten interner Clients und die Server-Infrastruktur
+- Zertifikatsaussteller-Ketten legten die Identität der kontaktierten Dienste offen
+- Avast-Antivirus-Datenverkehr wurde auf drei internen Hosts durch Verhaltens-Fingerprinting identifiziert
+- Der interne Host `192.168.10.9` wurde als einziger Nutzer bestätigt, der mit Ask-Ubuntu-Servern kommuniziert hat
 
-**No malicious activity was confirmed**, but the methodology applied here directly translates to threat hunting, C2 beacon detection, and encrypted malware traffic analysis.
+Es wurde keine schädliche Aktivität bestätigt, jedoch lässt sich die hier angewandte Methodik direkt auf Threat Hunting, C2-Beacon-Erkennung und die Analyse von verschlüsseltem Malware-Datenverkehr übertragen.
 
 ---
 
@@ -33,7 +33,7 @@ This investigation demonstrates that **encrypted traffic is not opaque to a trai
 
 | Field | Value |
 |---|---|
-| Scenario Type | Network Forensics - Encrypted Traffic Analysis |
+| Scenario Type | Network Forensics — Encrypted Traffic Analysis |
 | Traffic Type | HTTPS / TLS 1.2 |
 | Capture File | HTTPS_traffic.pcap |
 | Analysis Tool | tshark (Wireshark CLI) |
@@ -44,7 +44,7 @@ This investigation demonstrates that **encrypted traffic is not opaque to a trai
 
 ## Investigation Walkthrough
 
-### Phase 1 - SSL/TLS Traffic Isolation
+### Phase 1 — SSL/TLS Traffic Isolation
 
 **Objective:** Isolate all SSL/TLS traffic from the full capture.
 
@@ -54,13 +54,13 @@ tshark -Y 'ssl' -r HTTPS_traffic.pcap
 
 **Finding:** Packets containing TLS 1.2 sessions were returned, including `Client Hello`, `Server Hello`, `Certificate`, `Change Cipher Spec`, `Application Data`, and `Encrypted Alert` messages. This confirms active TLS sessions between internal hosts and external servers.
 
-**Analyst Note:** Even without decrypting the payload, the TLS record types alone reveal session lifecycle - useful for detecting incomplete handshakes (potential scanning), unexpected `Encrypted Alert` messages (connection tears that may indicate detection evasion), and unusual handshake timing.
+**Analyst Note:** Even without decrypting the payload, the TLS record types alone reveal session lifecycle — useful for detecting incomplete handshakes (potential scanning), unexpected `Encrypted Alert` messages (connection tears that may indicate detection evasion), and unusual handshake timing.
 
 ![SSL Traffic Isolation](screenshots/01_ssl_traffic_isolation.png)
 
 ---
 
-### Phase 2 - TLS Handshake Source/Destination Mapping
+### Phase 2 — TLS Handshake Source/Destination Mapping
 
 **Objective:** Map all endpoints participating in TLS handshakes.
 
@@ -79,11 +79,13 @@ tshark -r HTTPS_traffic.pcap -Y "ssl.handshake" -Tfields -e ip.src -e ip.dst
 
 **Analyst Note:** Bidirectional handshake pairs are expected. A host initiating many TLS handshakes in a short window without corresponding DNS queries can indicate C2 beaconing to hardcoded IP addresses — a key threat hunting pivot.
 
+![TLS Handshake Endpoints](screenshots/02_tls_handshake_endpoints.png)
+
 ---
 
-### Phase 3 - Certificate Issuer Extraction
+### Phase 3 — Certificate Issuer Extraction
 
-**Objective:** Identify the certificate authorities (CAs) and organizations behind the SSL sessions.
+**Objective:** Identify the certificate authorities and organizations behind the SSL sessions.
 
 ```bash
 tshark -r HTTPS_traffic.pcap -Y "ssl.handshake.certificate" -Tfields -e x509sat.printableString
@@ -91,11 +93,11 @@ tshark -r HTTPS_traffic.pcap -Y "ssl.handshake.certificate" -Tfields -e x509sat.
 
 **Finding:** The following certificate issuers were extracted:
 
-| Certificate Issuer Chain |
+| Certificate Issuer |
 |---|
 | Microsoft Corporation — Microsoft IT SSL SHA2 |
 | Google Inc — Google Internet Authority G2 — GeoTrust |
-| Symantec Class 3 Secure Server CA — VeriSign Trust Network |
+| Symantec Class 3 Secure Server CA G4 — VeriSign Trust Network |
 | DigiCert SHA2 High Assurance Server CA — Facebook, Inc. |
 | DigiCert SHA2 Secure Server CA — Grammarly, Inc. |
 | Let's Encrypt Authority X3 |
@@ -104,19 +106,21 @@ tshark -r HTTPS_traffic.pcap -Y "ssl.handshake.certificate" -Tfields -e x509sat.
 
 **Analyst Note:** Certificate issuer extraction without decryption is a legitimate intelligence technique. In threat hunting, self-signed certificates, certificates issued by unknown CAs, or certificates with anomalous validity periods are high-fidelity indicators of malicious infrastructure. All issuers here are legitimate.
 
+![Certificate Issuer Extraction](screenshots/03_certificate_issuer_extraction.png)
+
 ---
 
-### Phase 4 - Server IP Enumeration via Client Hello
+### Phase 4 — Server IP Enumeration via Client Hello
 
-**Objective:** List all external servers the internal network established SSL connections to, using the Client Hello as the initiating signal.
+**Objective:** List all external servers the internal network established SSL connections to.
 
 ```bash
-tshark -r HTTPS_traffic.pcap -Y "ssl && ssl.handshake.type==1" -Tfields -e ip.dst
+tshark -r HTTPS_traffic.pcap -Y "ssl.handshake.type==1" -Tfields -e ip.dst
 ```
 
-**Finding - SSL Server IPs:**
+**Finding — SSL Server IPs:**
 
-| Destination IP | Likely Owner (based on certificate) |
+| Destination IP | Likely Owner |
 |---|---|
 | 104.65.234.18 | Akamai CDN |
 | 134.170.107.72 | Microsoft |
@@ -129,61 +133,75 @@ tshark -r HTTPS_traffic.pcap -Y "ssl && ssl.handshake.type==1" -Tfields -e ip.ds
 | 179.60.192.7 | Facebook |
 | 119.81.94.2 | IBM / SoftLayer |
 
-**Analyst Note:** The volume of Facebook IPs suggests a user was actively using Facebook at capture time. Repeated Client Hellos to the same IP without session reuse can indicate connection instability or automated tooling.
+**Analyst Note:** Repeated Client Hellos to the same IP without session reuse can indicate connection instability or automated tooling. In real incidents, C2 servers often appear as repeated TLS connections to a single external IP.
+
+![Server IP Enumeration](screenshots/04_server_ip_enumeration.png)
 
 ---
 
-### Phase 5 - DNS Query Analysis
+### Phase 5 — Ask Ubuntu Server Identification
 
-**Objective:** Identify DNS servers used by internal clients.
-
-```bash
-tshark -r HTTPS_traffic.pcap -Y "dns && dns.flags.response==0" -Tfields -e ip.dst
-```
-
-**Finding - DNS Servers Used:**
-
-| DNS Server IP | Type |
-|---|---|
-| 192.168.0.1 | Internal gateway / likely SOHO router |
-| 192.168.10.1 | Second internal subnet gateway |
-| 8.8.8.8 | Google Public DNS |
-| 8.8.4.4 | Google Public DNS (secondary) |
-
-**Analyst Note:** Clients using Google's public DNS (8.8.8.8 / 8.8.4.4) directly — bypassing an internal DNS resolver - is a common threat hunting indicator. This behavior is used by malware to bypass DNS-based filtering and sinkholing. In an enterprise environment, direct external DNS queries should trigger a detection alert.
-
----
-
-### Phase 6 - Ask Ubuntu Server Identification
-
-**Objective:** Identify the IP addresses of Ask Ubuntu (askubuntu.com) servers and the internal user who contacted them.
+**Objective:** Identify the IP addresses of Ask Ubuntu servers.
 
 ```bash
 tshark -r HTTPS_traffic.pcap -Y "ip contains askubuntu"
 ```
 
-**Finding - Ask Ubuntu Server IPs:**
+**Finding — Ask Ubuntu Server IPs:**
 
 | IP Address | Role |
 |---|---|
-| 151.101.1.69 | Ask Ubuntu CDN node |
-| 151.101.193.69 | Ask Ubuntu CDN node |
-| 151.101.129.69 | Ask Ubuntu CDN node |
-| 151.101.65.69 | Ask Ubuntu CDN node |
+| 151.101.1.69 | Ask Ubuntu / Fastly CDN |
+| 151.101.193.69 | Ask Ubuntu / Fastly CDN |
+| 151.101.129.69 | Ask Ubuntu / Fastly CDN |
+| 151.101.65.69 | Ask Ubuntu / Fastly CDN |
 
-These IPs belong to Fastly CDN, which serves askubuntu.com as part of Stack Exchange's infrastructure.
+**Analyst Note:** The `ip contains` filter matches string patterns within packet payloads — the same technique used to detect malware C2 strings, credential harvesting domains, and data exfiltration markers in network traffic.
 
-**Client Identification:**
+![Ask Ubuntu Server Identification](screenshots/05_askubuntu_server_identification.png)
+
+---
+
+### Phase 6 — Ask Ubuntu Client Identification
+
+**Objective:** Identify the internal user who contacted Ask Ubuntu servers.
 
 ```bash
 tshark -r HTTPS_traffic.pcap -Y "ip.dst==151.101.1.69 || ip.dst==151.101.193.69 || ip.dst==151.101.129.69 || ip.dst==151.101.65.69" -Tfields -e ip.src
 ```
 
-**Result:** `192.168.10.9` — sole internal host querying Ask Ubuntu servers.
+**Finding:** `192.168.10.9` — sole internal host querying Ask Ubuntu servers.
+
+**Analyst Note:** Chaining filters from Phase 5 to Phase 6 demonstrates a core SOC workflow — identify the server first, then pivot to find the internal client. This same method is used to identify which internal host communicated with a known malicious IP.
+
+![Ask Ubuntu Client Identification](screenshots/06_askubuntu_client_identification.png)
 
 ---
 
-### Phase 7 - Antivirus Software Fingerprinting via Traffic Content
+### Phase 7 — DNS Resolver Identification
+
+**Objective:** Identify DNS servers used by internal clients.
+
+```bash
+tshark -r HTTPS_traffic.pcap -Y "udp.dstport == 53" -Tfields -e ip.dst | sort | uniq -c
+```
+
+**Finding — DNS Servers Used:**
+
+| DNS Server IP | Type |
+|---|---|
+| 192.168.0.1 | Internal gateway |
+| 192.168.10.1 | Internal subnet gateway |
+| 8.8.8.8 | Google Public DNS |
+| 8.8.4.4 | Google Public DNS (secondary) |
+
+**Analyst Note:** Clients using Google's public DNS (8.8.8.8 / 8.8.4.4) directly — bypassing an internal DNS resolver — is a common threat hunting indicator. This behavior is used by malware to bypass DNS-based filtering and sinkholing. In an enterprise environment, direct external DNS queries should trigger a detection alert.
+
+![DNS Resolver Identification](screenshots/07_dns_resolver_identification.png)
+
+---
+
+### Phase 8 — Passive Antivirus Fingerprinting
 
 **Objective:** Identify hosts running Avast Antivirus through traffic content matching.
 
@@ -191,15 +209,17 @@ tshark -r HTTPS_traffic.pcap -Y "ip.dst==151.101.1.69 || ip.dst==151.101.193.69 
 tshark -r HTTPS_traffic.pcap -Y "ip contains avast" -Tfields -e ip.src
 ```
 
-**Finding - Hosts Running Avast:**
+**Finding — Hosts Running Avast:**
 
-| Internal IP | Role |
-|---|---|
-| 192.168.10.9 | Internal workstation |
-| 192.168.0.1 | Gateway (also running Avast agent) |
-| 192.168.0.136 | Internal workstation |
+| Internal IP |
+|---|
+| 192.168.10.9 |
+| 192.168.0.1 |
+| 192.168.0.136 |
 
-**Analyst Note:** This technique - matching plaintext strings inside TLS traffic - works because some AV products embed their product name in HTTP User-Agent headers or beacon URLs that are resolved before full TLS negotiation. This same methodology is used by threat hunters to fingerprint software inventory passively, and by red teams to identify what AV is running on target hosts.
+**Analyst Note:** Some AV products embed their product name in HTTP User-Agent headers or beacon URLs. This same methodology is used by threat hunters to fingerprint software inventory passively, and by red teams to identify what AV is running on target hosts.
+
+![Avast Software Fingerprinting](screenshots/08_avast_software_fingerprinting.png)
 
 ---
 
@@ -207,42 +227,38 @@ tshark -r HTTPS_traffic.pcap -Y "ip contains avast" -Tfields -e ip.src
 
 | Type | Value | Context | Confidence |
 |---|---|---|---|
-| IPv4 - Internal | 192.168.0.136 | Primary TLS-communicating host | High |
-| IPv4 - Internal | 192.168.10.9 | Queried askubuntu.com; running Avast | High |
-| IPv4 - Internal | 192.168.0.1 | Internal gateway; Avast detected | Medium |
-| IPv4 - External | 104.65.234.18 | TLS session target (Akamai) | Informational |
-| IPv4 - External | 134.170.107.72 | TLS session target (Microsoft) | Informational |
-| IPv4 - External | 74.125.68.188 | TLS session target (Google) | Informational |
-| IPv4 - External | 54.230.191.232 | TLS session target (Amazon) | Informational |
-| IPv4 - External | 151.101.1.69 | Ask Ubuntu / Fastly CDN | Informational |
-| IPv4 - DNS | 8.8.8.8 | Direct external DNS usage | Low - Policy Violation |
-| IPv4 - DNS | 8.8.4.4 | Direct external DNS usage | Low - Policy Violation |
-| Certificate Issuer | DigiCert SHA2 / Facebook | TLS cert for Facebook sessions | Informational |
+| IPv4 Internal | 192.168.0.136 | Primary TLS-communicating host | High |
+| IPv4 Internal | 192.168.10.9 | Queried askubuntu.com; running Avast | High |
+| IPv4 Internal | 192.168.0.1 | Internal gateway; Avast detected | Medium |
+| IPv4 External | 104.65.234.18 | TLS session target (Akamai) | Informational |
+| IPv4 External | 134.170.107.72 | TLS session target (Microsoft) | Informational |
+| IPv4 External | 74.125.68.188 | TLS session target (Google) | Informational |
+| IPv4 External | 54.230.191.232 | TLS session target (Amazon) | Informational |
+| IPv4 External | 151.101.1.69 | Ask Ubuntu / Fastly CDN | Informational |
+| IPv4 DNS | 8.8.8.8 | Direct external DNS — policy violation | Low |
+| IPv4 DNS | 8.8.4.4 | Direct external DNS — policy violation | Low |
+| Certificate Issuer | AVAST Software s.r.o. | TLS cert issuer identified in traffic | Informational |
 | Software | Avast Antivirus | Identified via traffic fingerprint | High |
 
 ---
 
 ## MITRE ATT&CK Mapping
 
-| Technique ID | Technique Name | Sub-Technique | Relevance to This Investigation |
-|---|---|---|---|
-| T1071.001 | Application Layer Protocol: Web Protocols | HTTPS | Primary communication protocol observed |
-| T1071.004 | Application Layer Protocol: DNS | - | DNS queries used for C2 resolution in real attacks; observed here for baseline |
-| T1572 | Protocol Tunneling | - | HTTPS used to encapsulate all communications |
-| T1040 | Network Sniffing | - | Analyst technique - passive traffic capture |
-| T1016 | System Network Configuration Discovery | - | DNS server identification reveals network architecture |
-| T1518.001 | Software Discovery: Security Software Discovery | - | Avast fingerprinting via traffic analysis |
-| T1567 | Exfiltration Over Web Service | - | HTTPS as exfiltration channel in real incidents |
-
-**Note:** No malicious TTPs were confirmed in this capture. The MITRE mapping reflects techniques that this investigation methodology detects and investigates.
+| Technique ID | Technique Name | Relevance |
+|---|---|---|
+| T1071.001 | Application Layer Protocol: Web Protocols | Primary communication protocol observed |
+| T1071.004 | Application Layer Protocol: DNS | DNS queries used for baseline and C2 resolution in real attacks |
+| T1572 | Protocol Tunneling | HTTPS used to encapsulate all communications |
+| T1040 | Network Sniffing | Passive traffic capture — analyst technique |
+| T1016 | System Network Configuration Discovery | DNS server identification reveals network architecture |
+| T1518.001 | Software Discovery: Security Software Discovery | Avast fingerprinting via traffic analysis |
+| T1567 | Exfiltration Over Web Service | HTTPS as potential exfiltration channel |
 
 ---
 
 ## Detection Opportunities
 
-### Detection Rule 1 - Direct External DNS (Policy Bypass)
-
-**Logic:** Alert when an internal host sends DNS queries directly to external resolvers (not the corporate DNS server).
+### Detection Rule 1 — Direct External DNS
 
 ```
 event_type: dns_query
@@ -251,14 +267,11 @@ AND dst_ip: NOT [approved_internal_dns_servers]
 AND dst_port: 53
 ```
 
-**Severity:** Medium  
-**Use Case:** Malware bypassing DNS sinkholes; DNS tunneling to external C2
+**Severity:** Medium — Malware bypassing DNS sinkholes; DNS tunneling to external C2
 
 ---
 
-### Detection Rule 2 - Unusual TLS Certificate Issuer
-
-**Logic:** Alert on TLS sessions presenting certificates from unknown or self-signed CAs.
+### Detection Rule 2 — Unknown TLS Certificate Issuer
 
 ```
 event_type: tls_handshake
@@ -266,14 +279,11 @@ AND tls.cert_issuer: NOT [approved_ca_list]
 OR tls.cert_self_signed: true
 ```
 
-**Severity:** High  
-**Use Case:** Malware C2 using self-signed certificates; MitM attacks
+**Severity:** High — Malware C2 using self-signed certificates; MitM attacks
 
 ---
 
-### Detection Rule 3 - High Volume Client Hello Without DNS Precedent
-
-**Logic:** Alert on TLS Client Hello packets to IP addresses where no preceding DNS query was observed in the session window.
+### Detection Rule 3 — TLS Client Hello Without DNS Precedent
 
 ```
 event_type: tls_client_hello
@@ -281,14 +291,11 @@ AND dst_ip: NOT IN [recently_resolved_ips]
 AND timewindow: 60s
 ```
 
-**Severity:** Medium  
-**Use Case:** Hardcoded C2 IP addresses; DGA-resolved C2 where DNS was cached elsewhere
+**Severity:** Medium — Hardcoded C2 IP addresses
 
 ---
 
-### Detection Rule 4 - Software Fingerprint via Network Traffic
-
-**Logic:** Alert when traffic content matches known AV/EDR product strings for inventory auditing or anomaly detection.
+### Detection Rule 4 — Passive Software Fingerprint
 
 ```
 event_type: network_content_match
@@ -296,22 +303,19 @@ AND content_match: ["avast", "eset", "sophos", "crowdstrike"]
 AND src_ip: NOT IN [known_av_update_servers]
 ```
 
-**Severity:** Informational  
-**Use Case:** Passive software inventory; detecting unlicensed AV or unexpected software
+**Severity:** Informational — Passive software inventory
 
 ---
 
 ## Incident Response Actions
 
-> This exercise identified no active incident. The following actions reflect what would be taken if suspicious patterns were confirmed.
+**Priority 1:** Investigate direct external DNS usage on 8.8.8.8 / 8.8.4.4 — validate whether this is a policy exception or misconfiguration.
 
-**Triage Priority 1:** Investigate direct external DNS usage on 8.8.8.8 / 8.8.4.4 — validate whether this is a policy exception or misconfiguration.
+**Priority 2:** Correlate the TLS session inventory with the approved application whitelist.
 
-**Triage Priority 2:** Correlate the TLS session inventory with the approved application whitelist - flag any destination IPs not associated with known business applications.
+**Priority 3:** Validate Avast version and license status on all three identified hosts.
 
-**Triage Priority 3:** Validate Avast version and license status on `192.168.10.9`, `192.168.0.1`, and `192.168.0.136` - confirm AV is current and managed.
-
-**Triage Priority 4:** Review `192.168.10.9` for additional indicators — this host made direct external DNS queries, accessed Ask Ubuntu, and ran Avast. Build a behavioral baseline.
+**Priority 4:** Build a behavioral baseline for `192.168.10.9` — this host made direct external DNS queries, accessed Ask Ubuntu, and ran Avast.
 
 ---
 
@@ -319,37 +323,35 @@ AND src_ip: NOT IN [known_av_update_servers]
 
 | Phase | Action | Priority |
 |---|---|---|
-| Containment | Block direct external DNS (port 53) at the firewall for all internal hosts except the approved internal resolver | High |
-| Containment | Enforce DNS over the corporate resolver - all clients should use 192.168.0.1 or 192.168.10.1 | High |
-| Eradication | N/A - no confirmed malicious activity | - |
-| Recovery | Document approved external DNS exception list if 8.8.8.8 is authorized | Medium |
-| Hardening | Implement TLS inspection (SSL inspection proxy) to enable payload visibility for corporate traffic | High |
-| Hardening | Deploy certificate pinning monitoring — alert on unexpected cert issuer changes for critical business domains | Medium |
+| Containment | Block direct external DNS (port 53) at firewall for all internal hosts | High |
+| Containment | Enforce DNS through corporate resolver only | High |
+| Hardening | Implement TLS inspection proxy for corporate traffic | High |
+| Hardening | Alert on unexpected certificate issuer changes for critical domains | Medium |
 
 ---
 
 ## Risk Assessment
 
-| Risk Area | Current State | Risk Level | Recommendation |
-|---|---|---|---|
-| Direct external DNS | Observed - clients bypassing internal resolver | Medium | Enforce firewall block on outbound port 53 except from approved resolver |
-| TLS visibility | Encrypted traffic not inspectable | Medium | Evaluate TLS inspection proxy deployment |
-| Software inventory | AV identified passively - no active MDM confirmation | Low | Validate all hosts in MDM/EDR platform |
-| Encrypted exfiltration | HTTPS can carry data exfiltration invisibly | Medium | Implement DLP at proxy layer; monitor for large HTTPS uploads |
+| Risk Area | Risk Level | Recommendation |
+|---|---|---|
+| Direct external DNS | Medium | Block outbound port 53 except from approved resolver |
+| TLS visibility | Medium | Evaluate TLS inspection proxy |
+| Software inventory | Low | Validate all hosts in MDM/EDR platform |
+| Encrypted exfiltration | Medium | Implement DLP at proxy layer |
 
 ---
 
 ## Lessons Learned
 
-1. **Encrypted traffic is not blind traffic.** TLS handshake metadata - including certificate fields, handshake type, and timing - provides substantial intelligence without decryption.
+1. **Verschlüsselter Traffic ist nicht blind.** TLS-Handshake-Metadaten liefern erhebliche Informationen ohne Entschlüsselung.
 
-2. **DNS is a forensic goldmine.** DNS query patterns reveal browsing behavior, software inventory, and potential policy violations. DNS logging should be mandatory in any SOC environment.
+2. **DNS ist eine forensische Goldgrube.** DNS-Abfragemuster enthüllen Verhalten, Software-Inventar und potenzielle Policy-Verstöße.
 
-3. **String matching inside traffic works for passive fingerprinting.** The `ip contains` filter in tshark matched Avast beacon strings within network packets - this same technique detects malware C2 strings, credential harvesting domains, and data exfiltration markers.
+3. **String-Matching im Traffic funktioniert für passives Fingerprinting.** Der `ip contains` Filter matched Strings in Netzwerkpaketen — dieselbe Technik erkennt Malware-C2-Strings.
 
-4. **tshark field extraction enables scalable analysis.** Using `-Tfields -e field.name` transforms packet analysis into structured data that can feed into SIEM correlation, spreadsheet analysis, or automated IOC extraction pipelines.
+4. **tshark Feldextraktion ermöglicht skalierbare Analyse.** `-Tfields -e field.name` transformiert Paketanalyse in strukturierte Daten für SIEM-Korrelation.
 
-5. **Direct external DNS is a detection opportunity.** In real environments, malware routinely uses 8.8.8.8 or 1.1.1.1 to bypass internal DNS monitoring. This should be a Sigma rule in every SOC.
+5. **Direktes externes DNS ist eine Detection-Möglichkeit.** Malware nutzt routinemäßig 8.8.8.8 um internes DNS-Monitoring zu umgehen.
 
 ---
 
@@ -357,15 +359,14 @@ AND src_ip: NOT IN [known_av_update_servers]
 
 | Skill | Evidence |
 |---|---|
-| PCAP analysis with tshark | All 8 investigation commands |
-| TLS/SSL protocol knowledge | Handshake type filtering, certificate extraction |
-| DNS forensics | DNS flag filtering, resolver identification |
-| Behavioral fingerprinting | Avast identification via content matching |
-| Network IOC extraction | IP, certificate, and software IOC table |
-| Threat hunting mindset | Detection rules derived from investigation findings |
-| SOC documentation | Structured case file with MITRE mapping |
-| Detection engineering | 4 actionable detection rules written |
-| MITRE ATT&CK framework | 7 relevant techniques mapped |
+| PCAP-Analyse mit tshark | Alle 8 Investigation Commands |
+| TLS/SSL Protokollkenntnisse | Handshake-Filterung, Zertifikatsextraktion |
+| DNS Forensics | DNS-Flag-Filterung, Resolver-Identifikation |
+| Behavioral Fingerprinting | Avast-Identifikation via Content Matching |
+| Network IOC Extraction | IP, Zertifikat und Software IOC-Tabelle |
+| Threat Hunting Mindset | Detection Rules aus Investigation-Findings |
+| SOC Dokumentation | Strukturiertes Case File mit MITRE Mapping |
+| MITRE ATT&CK Framework | 7 relevante Techniken gemappt |
 
 ---
 
@@ -373,50 +374,45 @@ AND src_ip: NOT IN [known_av_update_servers]
 
 | Tool | Purpose |
 |---|---|
-| tshark | CLI-based PCAP analysis, field extraction, display filter application |
-| Wireshark (reference) | Visual validation and filter syntax reference |
-| MITRE ATT&CK Navigator | Technique mapping |
-| AttackDefense Labs | Lab environment and PCAP source |
+| tshark | CLI-basierte PCAP-Analyse, Feldextraktion, Display Filter |
+| Wireshark | Visuelle Validierung und Filter-Syntax-Referenz |
+| MITRE ATT&CK | Technique Mapping |
+| AttackDefense Labs | Lab-Umgebung und PCAP-Quelle |
 
 ---
 
-## GitHub Repository Structure
+## About This Project
 
-```
-NTA-2024-HTTPS-001-HTTPS-Traffic-Analysis/
-│
-├── README.md                          ← This report
-├── evidence/
-│   └── (PCAP not included — lab environment only)
-├── analysis/
-│   ├── tshark_commands.md             ← All commands with explanations
-│   ├── ioc_table.csv                  ← Machine-readable IOC export
-│   └── dns_servers.txt                ← Extracted DNS resolver list
-├── detections/
-│   ├── direct_external_dns.yml        ← Sigma rule
-│   ├── self_signed_tls_cert.yml       ← Sigma rule
-│   └── c2_no_dns_precedent.yml        ← Sigma rule (pseudo)
-├── screenshots/
-│   ├── tshark_ssl_output.png
-│   ├── handshake_ips.png
-│   ├── certificate_issuers.png
-│   ├── askubuntu_ips.png
-│   └── avast_fingerprint.png
-└── mitre/
-    └── attack_navigator_layer.json    ← ATT&CK Navigator export
-```
+Dieses Projekt demonstriert die Fähigkeit, Netzwerk-Forensik auf verschlüsseltem HTTPS-Traffic durchzuführen — eine Kernkompetenz für SOC-Analysten und DFIR-Investigatoren. Anstatt verschlüsselten Traffic als Sackgasse zu behandeln, wurde Protokoll-Wissen angewendet um bedeutende Informationen zu extrahieren: Endpoint-Mapping, Zertifikatsketten-Analyse, DNS-Verhaltens-Profiling und passives Software-Inventar via Verhaltens-Fingerprinting.
+
+Das Projekt folgt einer realen SOC-Case-Struktur — von der initialen Triage über IOC-Extraktion, MITRE ATT&CK Mapping und Detection Rule Development bis hin zu dokumentierten IR-Empfehlungen.
+
+**Relevant für:** SOC Analyst L1/L2, Blue Team Analyst, Network Forensics Analyst, DFIR Analyst
 
 ---
 
-## Project Summary
+## References
 
-**What this project demonstrates:**
+### Official Documentation
 
-This investigation showcases my ability to conduct network forensics on encrypted HTTPS traffic using `tshark` - a core skill for SOC analysts and DFIR investigators. Rather than treating encrypted traffic as a dead end, I applied protocol-level knowledge to extract meaningful intelligence: endpoint mapping, certificate chain analysis, DNS behavior profiling, and passive software inventory via behavioral fingerprinting.
+| Source | URL |
+|---|---|
+| tshark Man Page | https://www.wireshark.org/docs/man-pages/tshark.html |
+| Wireshark Display Filter Reference | https://www.wireshark.org/docs/dfref/ |
+| Wireshark Wiki — TLS | https://wiki.wireshark.org/TLS |
+| MITRE ATT&CK Framework | https://attack.mitre.org |
 
-The project follows a real SOC case structure - from initial triage through IOC extraction, MITRE ATT&CK mapping, detection rule development, and documented IR recommendations - mirroring the workflow expected in an enterprise Blue Team environment.
+### Community Resources
 
-**Directly relevant to:** SOC Analyst L1/L2, Blue Team Analyst, Network Forensics Analyst, DFIR Analyst
+| Source | URL |
+|---|---|
+| tshark Cheatsheet — Bentasker | https://snippets.bentasker.co.uk/posts/bash/tshark-cheatsheet.html |
+| tshark Cheatsheet — jsur.in | https://jsur.in/post/2020-02-19-tshark-cheatsheet |
 
----
+### Lab Platform
+
+| Source | URL |
+|---|---|
+| AttackDefense Labs — Filtering Advanced: HTTPS | https://www.attackdefense.com/challengedetails?cid=3 |
+| PentesterAcademy | https://www.pentesteracademy.com |
 
