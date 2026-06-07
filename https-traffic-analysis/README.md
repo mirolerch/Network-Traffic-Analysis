@@ -77,7 +77,7 @@ tshark -r HTTPS_traffic.pcap -Y "ssl.handshake" -Tfields -e ip.src -e ip.dst
 | 192.168.0.136 | 74.125.68.188 |
 | 192.168.0.136 | 54.230.191.232 |
 
-**Analyst Note:** Bidirectional handshake pairs are expected. A host initiating many TLS handshakes in a short window without corresponding DNS queries can indicate C2 beaconing to hardcoded IP addresses — a key threat hunting pivot.
+**Analyst Note:** Bidirectional handshake pairs are expected. A host initiating many TLS handshakes in a short window without corresponding DNS queries can indicate C2 beaconing to hardcoded IP addresses - a key threat hunting pivot.
 
 ![TLS Handshake Endpoints](screenshots/02_tls_handshake_endpoints.png)
 
