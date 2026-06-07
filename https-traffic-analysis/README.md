@@ -156,7 +156,7 @@ tshark -r HTTPS_traffic.pcap -Y "ip contains askubuntu"
 | 151.101.129.69 | Ask Ubuntu / Fastly CDN |
 | 151.101.65.69 | Ask Ubuntu / Fastly CDN |
 
-**Analyst Note:** The `ip contains` filter matches string patterns within packet payloads — the same technique used to detect malware C2 strings, credential harvesting domains, and data exfiltration markers in network traffic.
+**Analyst Note:** The `ip contains` filter matches string patterns within packet payloads - the same technique used to detect malware C2 strings, credential harvesting domains, and data exfiltration markers in network traffic.
 
 ![Ask Ubuntu Server Identification](screenshots/05_askubuntu_server_identification.png)
 
