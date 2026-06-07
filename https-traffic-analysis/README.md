@@ -56,7 +56,7 @@ tshark -Y 'ssl' -r HTTPS_traffic.pcap
 
 **Analyst Note:** Even without decrypting the payload, the TLS record types alone reveal session lifecycle - useful for detecting incomplete handshakes (potential scanning), unexpected `Encrypted Alert` messages (connection tears that may indicate detection evasion), and unusual handshake timing.
 
-Phase 1 → ![SSL Traffic Isolation](screenshots/01_ssl_traffic_isolation.png)
+![SSL Traffic Isolation](screenshots/01_ssl_traffic_isolation.png)
 
 ---
 
