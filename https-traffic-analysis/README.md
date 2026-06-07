@@ -5,7 +5,7 @@
 ---
 
 > **Classification:** TLP:WHITE — Portfolio / Training Exercise  
-> **Analyst:** [Miroslaw Lerch]  
+> **Analyst:** Miroslaw Lerch  
 > **Platform:** AttackDefense Labs (PentesterAcademy)  
 > **Lab:** Filtering Advanced: HTTPS  
 > **Date:** 2026  
