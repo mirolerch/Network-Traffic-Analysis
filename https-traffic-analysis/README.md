@@ -54,7 +54,7 @@ tshark -Y 'ssl' -r HTTPS_traffic.pcap
 
 **Finding:** Packets containing TLS 1.2 sessions were returned, including `Client Hello`, `Server Hello`, `Certificate`, `Change Cipher Spec`, `Application Data`, and `Encrypted Alert` messages. This confirms active TLS sessions between internal hosts and external servers.
 
-**Analyst Note:** Even without decrypting the payload, the TLS record types alone reveal session lifecycle — useful for detecting incomplete handshakes (potential scanning), unexpected `Encrypted Alert` messages (connection tears that may indicate detection evasion), and unusual handshake timing.
+**Analyst Note:** Even without decrypting the payload, the TLS record types alone reveal session lifecycle - useful for detecting incomplete handshakes (potential scanning), unexpected `Encrypted Alert` messages (connection tears that may indicate detection evasion), and unusual handshake timing.
 
 ---
 
@@ -145,7 +145,7 @@ tshark -r HTTPS_traffic.pcap -Y "dns && dns.flags.response==0" -Tfields -e ip.ds
 | 8.8.8.8 | Google Public DNS |
 | 8.8.4.4 | Google Public DNS (secondary) |
 
-**Analyst Note:** Clients using Google's public DNS (8.8.8.8 / 8.8.4.4) directly — bypassing an internal DNS resolver — is a common threat hunting indicator. This behavior is used by malware to bypass DNS-based filtering and sinkholing. In an enterprise environment, direct external DNS queries should trigger a detection alert.
+**Analyst Note:** Clients using Google's public DNS (8.8.8.8 / 8.8.4.4) directly — bypassing an internal DNS resolver - is a common threat hunting indicator. This behavior is used by malware to bypass DNS-based filtering and sinkholing. In an enterprise environment, direct external DNS queries should trigger a detection alert.
 
 ---
 
@@ -194,7 +194,7 @@ tshark -r HTTPS_traffic.pcap -Y "ip contains avast" -Tfields -e ip.src
 | 192.168.0.1 | Gateway (also running Avast agent) |
 | 192.168.0.136 | Internal workstation |
 
-**Analyst Note:** This technique — matching plaintext strings inside TLS traffic — works because some AV products embed their product name in HTTP User-Agent headers or beacon URLs that are resolved before full TLS negotiation. This same methodology is used by threat hunters to fingerprint software inventory passively, and by red teams to identify what AV is running on target hosts.
+**Analyst Note:** This technique - matching plaintext strings inside TLS traffic - works because some AV products embed their product name in HTTP User-Agent headers or beacon URLs that are resolved before full TLS negotiation. This same methodology is used by threat hunters to fingerprint software inventory passively, and by red teams to identify what AV is running on target hosts.
 
 ---
 
@@ -302,9 +302,9 @@ AND src_ip: NOT IN [known_av_update_servers]
 
 **Triage Priority 1:** Investigate direct external DNS usage on 8.8.8.8 / 8.8.4.4 — validate whether this is a policy exception or misconfiguration.
 
-**Triage Priority 2:** Correlate the TLS session inventory with the approved application whitelist — flag any destination IPs not associated with known business applications.
+**Triage Priority 2:** Correlate the TLS session inventory with the approved application whitelist - flag any destination IPs not associated with known business applications.
 
-**Triage Priority 3:** Validate Avast version and license status on `192.168.10.9`, `192.168.0.1`, and `192.168.0.136` — confirm AV is current and managed.
+**Triage Priority 3:** Validate Avast version and license status on `192.168.10.9`, `192.168.0.1`, and `192.168.0.136` - confirm AV is current and managed.
 
 **Triage Priority 4:** Review `192.168.10.9` for additional indicators — this host made direct external DNS queries, accessed Ask Ubuntu, and ran Avast. Build a behavioral baseline.
 
@@ -315,8 +315,8 @@ AND src_ip: NOT IN [known_av_update_servers]
 | Phase | Action | Priority |
 |---|---|---|
 | Containment | Block direct external DNS (port 53) at the firewall for all internal hosts except the approved internal resolver | High |
-| Containment | Enforce DNS over the corporate resolver — all clients should use 192.168.0.1 or 192.168.10.1 | High |
-| Eradication | N/A — no confirmed malicious activity | — |
+| Containment | Enforce DNS over the corporate resolver - all clients should use 192.168.0.1 or 192.168.10.1 | High |
+| Eradication | N/A - no confirmed malicious activity | - |
 | Recovery | Document approved external DNS exception list if 8.8.8.8 is authorized | Medium |
 | Hardening | Implement TLS inspection (SSL inspection proxy) to enable payload visibility for corporate traffic | High |
 | Hardening | Deploy certificate pinning monitoring — alert on unexpected cert issuer changes for critical business domains | Medium |
@@ -327,16 +327,16 @@ AND src_ip: NOT IN [known_av_update_servers]
 
 | Risk Area | Current State | Risk Level | Recommendation |
 |---|---|---|---|
-| Direct external DNS | Observed — clients bypassing internal resolver | Medium | Enforce firewall block on outbound port 53 except from approved resolver |
+| Direct external DNS | Observed - clients bypassing internal resolver | Medium | Enforce firewall block on outbound port 53 except from approved resolver |
 | TLS visibility | Encrypted traffic not inspectable | Medium | Evaluate TLS inspection proxy deployment |
-| Software inventory | AV identified passively — no active MDM confirmation | Low | Validate all hosts in MDM/EDR platform |
+| Software inventory | AV identified passively - no active MDM confirmation | Low | Validate all hosts in MDM/EDR platform |
 | Encrypted exfiltration | HTTPS can carry data exfiltration invisibly | Medium | Implement DLP at proxy layer; monitor for large HTTPS uploads |
 
 ---
 
 ## Lessons Learned
 
-1. **Encrypted traffic is not blind traffic.** TLS handshake metadata — including certificate fields, handshake type, and timing — provides substantial intelligence without decryption.
+1. **Encrypted traffic is not blind traffic.** TLS handshake metadata - including certificate fields, handshake type, and timing - provides substantial intelligence without decryption.
 
 2. **DNS is a forensic goldmine.** DNS query patterns reveal browsing behavior, software inventory, and potential policy violations. DNS logging should be mandatory in any SOC environment.
 
@@ -407,9 +407,9 @@ NTA-2024-HTTPS-001-HTTPS-Traffic-Analysis/
 
 **What this project demonstrates:**
 
-This investigation showcases my ability to conduct network forensics on encrypted HTTPS traffic using `tshark` — a core skill for SOC analysts and DFIR investigators. Rather than treating encrypted traffic as a dead end, I applied protocol-level knowledge to extract meaningful intelligence: endpoint mapping, certificate chain analysis, DNS behavior profiling, and passive software inventory via behavioral fingerprinting.
+This investigation showcases my ability to conduct network forensics on encrypted HTTPS traffic using `tshark` - a core skill for SOC analysts and DFIR investigators. Rather than treating encrypted traffic as a dead end, I applied protocol-level knowledge to extract meaningful intelligence: endpoint mapping, certificate chain analysis, DNS behavior profiling, and passive software inventory via behavioral fingerprinting.
 
-The project follows a real SOC case structure — from initial triage through IOC extraction, MITRE ATT&CK mapping, detection rule development, and documented IR recommendations — mirroring the workflow expected in an enterprise Blue Team environment.
+The project follows a real SOC case structure - from initial triage through IOC extraction, MITRE ATT&CK mapping, detection rule development, and documented IR recommendations - mirroring the workflow expected in an enterprise Blue Team environment.
 
 **Directly relevant to:** SOC Analyst L1/L2, Blue Team Analyst, Network Forensics Analyst, DFIR Analyst
 
@@ -423,7 +423,7 @@ The project follows a real SOC case structure — from initial triage through IO
 
 One of the most common misconceptions in cybersecurity is that HTTPS means "nothing to see here."
 
-As a SOC analyst, encrypted traffic is still full of intelligence — if you know where to look.
+As a SOC analyst, encrypted traffic is still full of intelligence - if you know where to look.
 
 In this lab, I analyzed a PCAP file of HTTPS sessions using **tshark** and extracted:
 
