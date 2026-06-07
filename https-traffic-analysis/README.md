@@ -406,7 +406,7 @@ NTA-2024-HTTPS-001-HTTPS-Traffic-Analysis/
 
 ---
 
-## Recruiter Summary
+## Project Summary
 
 **What this project demonstrates:**
 
