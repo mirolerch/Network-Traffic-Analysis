@@ -235,7 +235,7 @@ tshark -r HTTPS_traffic.pcap -Y "ip contains avast" -Tfields -e ip.src
 
 ## Detection Opportunities
 
-### Detection Rule 1 — Direct External DNS (Policy Bypass)
+### Detection Rule 1 - Direct External DNS (Policy Bypass)
 
 **Logic:** Alert when an internal host sends DNS queries directly to external resolvers (not the corporate DNS server).
 
@@ -251,7 +251,7 @@ AND dst_port: 53
 
 ---
 
-### Detection Rule 2 — Unusual TLS Certificate Issuer
+### Detection Rule 2 - Unusual TLS Certificate Issuer
 
 **Logic:** Alert on TLS sessions presenting certificates from unknown or self-signed CAs.
 
@@ -266,7 +266,7 @@ OR tls.cert_self_signed: true
 
 ---
 
-### Detection Rule 3 — High Volume Client Hello Without DNS Precedent
+### Detection Rule 3 - High Volume Client Hello Without DNS Precedent
 
 **Logic:** Alert on TLS Client Hello packets to IP addresses where no preceding DNS query was observed in the session window.
 
@@ -281,7 +281,7 @@ AND timewindow: 60s
 
 ---
 
-### Detection Rule 4 — Software Fingerprint via Network Traffic
+### Detection Rule 4 - Software Fingerprint via Network Traffic
 
 **Logic:** Alert when traffic content matches known AV/EDR product strings for inventory auditing or anomaly detection.
 
