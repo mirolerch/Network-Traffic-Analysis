@@ -343,15 +343,15 @@ AND src_ip: NOT IN [known_av_update_servers]
 
 ## Lessons Learned
 
-1. **Verschlüsselter Traffic ist nicht blind.** TLS-Handshake-Metadaten liefern erhebliche Informationen ohne Entschlüsselung.
+1. **Encrypted traffic is not blind.** TLS handshake metadata provides substantial forensic value without decryption.
 
-2. **DNS ist eine forensische Goldgrube.** DNS-Abfragemuster enthüllen Verhalten, Software-Inventar und potenzielle Policy-Verstöße.
+2. **DNS is a forensic goldmine.** DNS query patterns reveal client behavior, software inventory, and potential policy violations.
 
-3. **String-Matching im Traffic funktioniert für passives Fingerprinting.** Der `ip contains` Filter matched Strings in Netzwerkpaketen — dieselbe Technik erkennt Malware-C2-Strings.
+3. **String matching works for passive fingerprinting.** The `ip contains` filter matches strings inside network packets — the same technique detects malware C2 strings.
 
-4. **tshark Feldextraktion ermöglicht skalierbare Analyse.** `-Tfields -e field.name` transformiert Paketanalyse in strukturierte Daten für SIEM-Korrelation.
+4. **tshark field extraction enables scalable analysis.** `-Tfields -e field.name` transforms packet analysis into structured data for SIEM correlation.
 
-5. **Direktes externes DNS ist eine Detection-Möglichkeit.** Malware nutzt routinemäßig 8.8.8.8 um internes DNS-Monitoring zu umgehen.
+5. **Direct external DNS is a detection opportunity.** Malware routinely uses 8.8.8.8 to bypass internal DNS monitoring.
 
 ---
 
@@ -359,14 +359,14 @@ AND src_ip: NOT IN [known_av_update_servers]
 
 | Skill | Evidence |
 |---|---|
-| PCAP-Analyse mit tshark | Alle 8 Investigation Commands |
-| TLS/SSL Protokollkenntnisse | Handshake-Filterung, Zertifikatsextraktion |
-| DNS Forensics | DNS-Flag-Filterung, Resolver-Identifikation |
-| Behavioral Fingerprinting | Avast-Identifikation via Content Matching |
-| Network IOC Extraction | IP, Zertifikat und Software IOC-Tabelle |
-| Threat Hunting Mindset | Detection Rules aus Investigation-Findings |
-| SOC Dokumentation | Strukturiertes Case File mit MITRE Mapping |
-| MITRE ATT&CK Framework | 7 relevante Techniken gemappt |
+| PCAP Analysis with tshark | All 8 investigation commands |
+| TLS/SSL Protocol Knowledge | Handshake filtering, certificate extraction |
+| DNS Forensics | DNS flag filtering, resolver identification |
+| Behavioral Fingerprinting | Avast identification via content matching |
+| Network IOC Extraction | IP, certificate and software IOC table |
+| Threat Hunting Mindset | Detection rules derived from investigation findings |
+| SOC Documentation | Structured case file with MITRE mapping |
+| MITRE ATT&CK Framework | 7 relevant techniques mapped |
 
 ---
 
@@ -374,20 +374,20 @@ AND src_ip: NOT IN [known_av_update_servers]
 
 | Tool | Purpose |
 |---|---|
-| tshark | CLI-basierte PCAP-Analyse, Feldextraktion, Display Filter |
-| Wireshark | Visuelle Validierung und Filter-Syntax-Referenz |
-| MITRE ATT&CK | Technique Mapping |
-| AttackDefense Labs | Lab-Umgebung und PCAP-Quelle |
+| tshark | CLI-based PCAP analysis, field extraction, display filters |
+| Wireshark | Visual validation and filter syntax reference |
+| MITRE ATT&CK | Technique mapping |
+| AttackDefense Labs | Lab environment and PCAP source |
 
 ---
 
 ## About This Project
 
-Dieses Projekt demonstriert die Fähigkeit, Netzwerk-Forensik auf verschlüsseltem HTTPS-Traffic durchzuführen - eine Kernkompetenz für SOC-Analysten und DFIR-Investigatoren. Anstatt verschlüsselten Traffic als Sackgasse zu behandeln, wurde Protokoll-Wissen angewendet um bedeutende Informationen zu extrahieren: Endpoint-Mapping, Zertifikatsketten-Analyse, DNS-Verhaltens-Profiling und passives Software-Inventar via Verhaltens-Fingerprinting.
+This project demonstrates the ability to conduct network forensics on encrypted HTTPS traffic — a core competency for SOC analysts and DFIR investigators. Rather than treating encrypted traffic as a dead end, protocol-level knowledge was applied to extract meaningful intelligence: endpoint mapping, certificate chain analysis, DNS behavior profiling, and passive software inventory via behavioral fingerprinting.
 
-Das Projekt folgt einer realen SOC-Case-Struktur - von der initialen Triage über IOC-Extraktion, MITRE ATT&CK Mapping und Detection Rule Development bis hin zu dokumentierten IR-Empfehlungen.
+The project follows a real SOC case structure — from initial triage through IOC extraction, MITRE ATT&CK mapping, detection rule development, and documented IR recommendations.
 
-**Relevant für:** SOC Analyst L1/L2, Blue Team Analyst, Network Forensics Analyst, DFIR Analyst
+**Relevant for:** SOC Analyst L1/L2, Blue Team Analyst, Network Forensics Analyst, DFIR Analyst
 
 ---
 
