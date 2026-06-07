@@ -1,15 +1,15 @@
 # SOC Investigation Report
 ## Case ID: NTA-2026-HTTPS-001
-## Network Traffic Analysis — Encrypted HTTPS Traffic Investigation
+## Network Traffic Analysis - Encrypted HTTPS Traffic Investigation
 
 ---
 
-> **Classification:** TLP:WHITE — Portfolio / Training Exercise
+> **Classification:** TLP:WHITE - Portfolio / Training Exercise
 > **Analyst:** Miro Lerch
 > **Platform:** AttackDefense Labs (PentesterAcademy)
 > **Lab:** Filtering Advanced: HTTPS
 > **Date:** 2026
-> **Status:** CLOSED — Analysis Complete
+> **Status:** CLOSED - Analysis Complete
 
 ---
 
@@ -33,7 +33,7 @@ Es wurde keine schädliche Aktivität bestätigt, jedoch lässt sich die hier an
 
 | Field | Value |
 |---|---|
-| Scenario Type | Network Forensics — Encrypted Traffic Analysis |
+| Scenario Type | Network Forensics - Encrypted Traffic Analysis |
 | Traffic Type | HTTPS / TLS 1.2 |
 | Capture File | HTTPS_traffic.pcap |
 | Analysis Tool | tshark (Wireshark CLI) |
@@ -44,7 +44,7 @@ Es wurde keine schädliche Aktivität bestätigt, jedoch lässt sich die hier an
 
 ## Investigation Walkthrough
 
-### Phase 1 — SSL/TLS Traffic Isolation
+### Phase 1 - SSL/TLS Traffic Isolation
 
 **Objective:** Isolate all SSL/TLS traffic from the full capture.
 
@@ -60,7 +60,7 @@ tshark -Y 'ssl' -r HTTPS_traffic.pcap
 
 ---
 
-### Phase 2 — TLS Handshake Source/Destination Mapping
+### Phase 2 - TLS Handshake Source/Destination Mapping
 
 **Objective:** Map all endpoints participating in TLS handshakes.
 
@@ -83,7 +83,7 @@ tshark -r HTTPS_traffic.pcap -Y "ssl.handshake" -Tfields -e ip.src -e ip.dst
 
 ---
 
-### Phase 3 — Certificate Issuer Extraction
+### Phase 3 - Certificate Issuer Extraction
 
 **Objective:** Identify the certificate authorities and organizations behind the SSL sessions.
 
@@ -95,14 +95,14 @@ tshark -r HTTPS_traffic.pcap -Y "ssl.handshake.certificate" -Tfields -e x509sat.
 
 | Certificate Issuer |
 |---|
-| Microsoft Corporation — Microsoft IT SSL SHA2 |
-| Google Inc — Google Internet Authority G2 — GeoTrust |
-| Symantec Class 3 Secure Server CA G4 — VeriSign Trust Network |
-| DigiCert SHA2 High Assurance Server CA — Facebook, Inc. |
-| DigiCert SHA2 Secure Server CA — Grammarly, Inc. |
+| Microsoft Corporation - Microsoft IT SSL SHA2 |
+| Google Inc - Google Internet Authority G2 - GeoTrust |
+| Symantec Class 3 Secure Server CA G4 - VeriSign Trust Network |
+| DigiCert SHA2 High Assurance Server CA - Facebook, Inc. |
+| DigiCert SHA2 Secure Server CA - Grammarly, Inc. |
 | Let's Encrypt Authority X3 |
 | GoDaddy Secure Certificate Authority G2 |
-| AVAST Software s.r.o. — DigiCert SHA2 High Assurance Server CA |
+| AVAST Software s.r.o. - DigiCert SHA2 High Assurance Server CA |
 
 **Analyst Note:** Certificate issuer extraction without decryption is a legitimate intelligence technique. In threat hunting, self-signed certificates, certificates issued by unknown CAs, or certificates with anomalous validity periods are high-fidelity indicators of malicious infrastructure. All issuers here are legitimate.
 
@@ -110,7 +110,7 @@ tshark -r HTTPS_traffic.pcap -Y "ssl.handshake.certificate" -Tfields -e x509sat.
 
 ---
 
-### Phase 4 — Server IP Enumeration via Client Hello
+### Phase 4 - Server IP Enumeration via Client Hello
 
 **Objective:** List all external servers the internal network established SSL connections to.
 
@@ -118,7 +118,7 @@ tshark -r HTTPS_traffic.pcap -Y "ssl.handshake.certificate" -Tfields -e x509sat.
 tshark -r HTTPS_traffic.pcap -Y "ssl.handshake.type==1" -Tfields -e ip.dst
 ```
 
-**Finding — SSL Server IPs:**
+**Finding - SSL Server IPs:**
 
 | Destination IP | Likely Owner |
 |---|---|
@@ -139,7 +139,7 @@ tshark -r HTTPS_traffic.pcap -Y "ssl.handshake.type==1" -Tfields -e ip.dst
 
 ---
 
-### Phase 5 — Ask Ubuntu Server Identification
+### Phase 5 - Ask Ubuntu Server Identification
 
 **Objective:** Identify the IP addresses of Ask Ubuntu servers.
 
@@ -147,7 +147,7 @@ tshark -r HTTPS_traffic.pcap -Y "ssl.handshake.type==1" -Tfields -e ip.dst
 tshark -r HTTPS_traffic.pcap -Y "ip contains askubuntu"
 ```
 
-**Finding — Ask Ubuntu Server IPs:**
+**Finding - Ask Ubuntu Server IPs:**
 
 | IP Address | Role |
 |---|---|
@@ -162,7 +162,7 @@ tshark -r HTTPS_traffic.pcap -Y "ip contains askubuntu"
 
 ---
 
-### Phase 6 — Ask Ubuntu Client Identification
+### Phase 6 - Ask Ubuntu Client Identification
 
 **Objective:** Identify the internal user who contacted Ask Ubuntu servers.
 
@@ -170,15 +170,15 @@ tshark -r HTTPS_traffic.pcap -Y "ip contains askubuntu"
 tshark -r HTTPS_traffic.pcap -Y "ip.dst==151.101.1.69 || ip.dst==151.101.193.69 || ip.dst==151.101.129.69 || ip.dst==151.101.65.69" -Tfields -e ip.src
 ```
 
-**Finding:** `192.168.10.9` — sole internal host querying Ask Ubuntu servers.
+**Finding:** `192.168.10.9` - sole internal host querying Ask Ubuntu servers.
 
-**Analyst Note:** Chaining filters from Phase 5 to Phase 6 demonstrates a core SOC workflow — identify the server first, then pivot to find the internal client. This same method is used to identify which internal host communicated with a known malicious IP.
+**Analyst Note:** Chaining filters from Phase 5 to Phase 6 demonstrates a core SOC workflow - identify the server first, then pivot to find the internal client. This same method is used to identify which internal host communicated with a known malicious IP.
 
 ![Ask Ubuntu Client Identification](screenshots/06_askubuntu_client_identification.png)
 
 ---
 
-### Phase 7 — DNS Resolver Identification
+### Phase 7 - DNS Resolver Identification
 
 **Objective:** Identify DNS servers used by internal clients.
 
@@ -186,7 +186,7 @@ tshark -r HTTPS_traffic.pcap -Y "ip.dst==151.101.1.69 || ip.dst==151.101.193.69 
 tshark -r HTTPS_traffic.pcap -Y "udp.dstport == 53" -Tfields -e ip.dst | sort | uniq -c
 ```
 
-**Finding — DNS Servers Used:**
+**Finding - DNS Servers Used:**
 
 | DNS Server IP | Type |
 |---|---|
@@ -195,13 +195,13 @@ tshark -r HTTPS_traffic.pcap -Y "udp.dstport == 53" -Tfields -e ip.dst | sort | 
 | 8.8.8.8 | Google Public DNS |
 | 8.8.4.4 | Google Public DNS (secondary) |
 
-**Analyst Note:** Clients using Google's public DNS (8.8.8.8 / 8.8.4.4) directly — bypassing an internal DNS resolver — is a common threat hunting indicator. This behavior is used by malware to bypass DNS-based filtering and sinkholing. In an enterprise environment, direct external DNS queries should trigger a detection alert.
+**Analyst Note:** Clients using Google's public DNS (8.8.8.8 / 8.8.4.4) directly - bypassing an internal DNS resolver - is a common threat hunting indicator. This behavior is used by malware to bypass DNS-based filtering and sinkholing. In an enterprise environment, direct external DNS queries should trigger a detection alert.
 
 ![DNS Resolver Identification](screenshots/07_dns_resolver_identification.png)
 
 ---
 
-### Phase 8 — Passive Antivirus Fingerprinting
+### Phase 8 - Passive Antivirus Fingerprinting
 
 **Objective:** Identify hosts running Avast Antivirus through traffic content matching.
 
@@ -209,7 +209,7 @@ tshark -r HTTPS_traffic.pcap -Y "udp.dstport == 53" -Tfields -e ip.dst | sort | 
 tshark -r HTTPS_traffic.pcap -Y "ip contains avast" -Tfields -e ip.src
 ```
 
-**Finding — Hosts Running Avast:**
+**Finding - Hosts Running Avast:**
 
 | Internal IP |
 |---|
@@ -235,8 +235,8 @@ tshark -r HTTPS_traffic.pcap -Y "ip contains avast" -Tfields -e ip.src
 | IPv4 External | 74.125.68.188 | TLS session target (Google) | Informational |
 | IPv4 External | 54.230.191.232 | TLS session target (Amazon) | Informational |
 | IPv4 External | 151.101.1.69 | Ask Ubuntu / Fastly CDN | Informational |
-| IPv4 DNS | 8.8.8.8 | Direct external DNS — policy violation | Low |
-| IPv4 DNS | 8.8.4.4 | Direct external DNS — policy violation | Low |
+| IPv4 DNS | 8.8.8.8 | Direct external DNS - policy violation | Low |
+| IPv4 DNS | 8.8.4.4 | Direct external DNS - policy violation | Low |
 | Certificate Issuer | AVAST Software s.r.o. | TLS cert issuer identified in traffic | Informational |
 | Software | Avast Antivirus | Identified via traffic fingerprint | High |
 
@@ -258,7 +258,7 @@ tshark -r HTTPS_traffic.pcap -Y "ip contains avast" -Tfields -e ip.src
 
 ## Detection Opportunities
 
-### Detection Rule 1 — Direct External DNS
+### Detection Rule 1 - Direct External DNS
 
 ```
 event_type: dns_query
@@ -267,11 +267,11 @@ AND dst_ip: NOT [approved_internal_dns_servers]
 AND dst_port: 53
 ```
 
-**Severity:** Medium — Malware bypassing DNS sinkholes; DNS tunneling to external C2
+**Severity:** Medium - Malware bypassing DNS sinkholes; DNS tunneling to external C2
 
 ---
 
-### Detection Rule 2 — Unknown TLS Certificate Issuer
+### Detection Rule 2 - Unknown TLS Certificate Issuer
 
 ```
 event_type: tls_handshake
@@ -279,11 +279,11 @@ AND tls.cert_issuer: NOT [approved_ca_list]
 OR tls.cert_self_signed: true
 ```
 
-**Severity:** High — Malware C2 using self-signed certificates; MitM attacks
+**Severity:** High - Malware C2 using self-signed certificates; MitM attacks
 
 ---
 
-### Detection Rule 3 — TLS Client Hello Without DNS Precedent
+### Detection Rule 3 - TLS Client Hello Without DNS Precedent
 
 ```
 event_type: tls_client_hello
@@ -291,11 +291,11 @@ AND dst_ip: NOT IN [recently_resolved_ips]
 AND timewindow: 60s
 ```
 
-**Severity:** Medium — Hardcoded C2 IP addresses
+**Severity:** Medium - Hardcoded C2 IP addresses
 
 ---
 
-### Detection Rule 4 — Passive Software Fingerprint
+### Detection Rule 4 - Passive Software Fingerprint
 
 ```
 event_type: network_content_match
@@ -303,19 +303,19 @@ AND content_match: ["avast", "eset", "sophos", "crowdstrike"]
 AND src_ip: NOT IN [known_av_update_servers]
 ```
 
-**Severity:** Informational — Passive software inventory
+**Severity:** Informational - Passive software inventory
 
 ---
 
 ## Incident Response Actions
 
-**Priority 1:** Investigate direct external DNS usage on 8.8.8.8 / 8.8.4.4 — validate whether this is a policy exception or misconfiguration.
+**Priority 1:** Investigate direct external DNS usage on 8.8.8.8 / 8.8.4.4 - validate whether this is a policy exception or misconfiguration.
 
 **Priority 2:** Correlate the TLS session inventory with the approved application whitelist.
 
 **Priority 3:** Validate Avast version and license status on all three identified hosts.
 
-**Priority 4:** Build a behavioral baseline for `192.168.10.9` — this host made direct external DNS queries, accessed Ask Ubuntu, and ran Avast.
+**Priority 4:** Build a behavioral baseline for `192.168.10.9` - this host made direct external DNS queries, accessed Ask Ubuntu, and ran Avast.
 
 ---
 
@@ -383,9 +383,9 @@ AND src_ip: NOT IN [known_av_update_servers]
 
 ## About This Project
 
-Dieses Projekt demonstriert die Fähigkeit, Netzwerk-Forensik auf verschlüsseltem HTTPS-Traffic durchzuführen — eine Kernkompetenz für SOC-Analysten und DFIR-Investigatoren. Anstatt verschlüsselten Traffic als Sackgasse zu behandeln, wurde Protokoll-Wissen angewendet um bedeutende Informationen zu extrahieren: Endpoint-Mapping, Zertifikatsketten-Analyse, DNS-Verhaltens-Profiling und passives Software-Inventar via Verhaltens-Fingerprinting.
+Dieses Projekt demonstriert die Fähigkeit, Netzwerk-Forensik auf verschlüsseltem HTTPS-Traffic durchzuführen - eine Kernkompetenz für SOC-Analysten und DFIR-Investigatoren. Anstatt verschlüsselten Traffic als Sackgasse zu behandeln, wurde Protokoll-Wissen angewendet um bedeutende Informationen zu extrahieren: Endpoint-Mapping, Zertifikatsketten-Analyse, DNS-Verhaltens-Profiling und passives Software-Inventar via Verhaltens-Fingerprinting.
 
-Das Projekt folgt einer realen SOC-Case-Struktur — von der initialen Triage über IOC-Extraktion, MITRE ATT&CK Mapping und Detection Rule Development bis hin zu dokumentierten IR-Empfehlungen.
+Das Projekt folgt einer realen SOC-Case-Struktur - von der initialen Triage über IOC-Extraktion, MITRE ATT&CK Mapping und Detection Rule Development bis hin zu dokumentierten IR-Empfehlungen.
 
 **Relevant für:** SOC Analyst L1/L2, Blue Team Analyst, Network Forensics Analyst, DFIR Analyst
 
@@ -399,20 +399,13 @@ Das Projekt folgt einer realen SOC-Case-Struktur — von der initialen Triage ü
 |---|---|
 | tshark Man Page | https://www.wireshark.org/docs/man-pages/tshark.html |
 | Wireshark Display Filter Reference | https://www.wireshark.org/docs/dfref/ |
-| Wireshark Wiki — TLS | https://wiki.wireshark.org/TLS |
+| Wireshark Wiki - TLS | https://wiki.wireshark.org/TLS |
 | MITRE ATT&CK Framework | https://attack.mitre.org |
 
 ### Community Resources
 
 | Source | URL |
 |---|---|
-| tshark Cheatsheet — Bentasker | https://snippets.bentasker.co.uk/posts/bash/tshark-cheatsheet.html |
-| tshark Cheatsheet — jsur.in | https://jsur.in/post/2020-02-19-tshark-cheatsheet |
-
-### Lab Platform
-
-| Source | URL |
-|---|---|
-| AttackDefense Labs — Filtering Advanced: HTTPS | https://www.attackdefense.com/challengedetails?cid=3 |
-| PentesterAcademy | https://www.pentesteracademy.com |
+| tshark Cheatsheet - Bentasker | https://snippets.bentasker.co.uk/posts/bash/tshark-cheatsheet.html |
+| tshark Cheatsheet - jsur.in | https://jsur.in/post/2020-02-19-tshark-cheatsheet |
 
