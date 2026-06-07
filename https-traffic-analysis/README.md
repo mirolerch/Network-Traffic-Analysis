@@ -15,17 +15,17 @@
 
 ## Executive Summary
 
-Während einer geplanten Netzwerkverkehrs-Analyse wurde eine PCAP-Aufzeichnung (`HTTPS_traffic.pcap`) mit verschlüsselten HTTPS/TLS-Sitzungen mithilfe von `tshark` untersucht, um verwertbare Informationen aus den Metadaten des verschlüsselten Datenverkehrs zu extrahieren. Obwohl HTTPS den Payload verschlüsselt, sind durch TLS-Handshake-Metadaten, DNS-Abfragemuster, Zertifikatsaussteller-Felder und Verhaltens-Fingerprinting weiterhin bedeutende forensische Erkenntnisse zugänglich.
+During a scheduled network traffic review, a PCAP capture (`HTTPS_traffic.pcap`) containing encrypted HTTPS/TLS sessions was analyzed using `tshark` to extract actionable intelligence from encrypted traffic metadata. Although HTTPS encrypts the payload, significant forensic value remains accessible through TLS handshake metadata, DNS query patterns, certificate issuer fields, and behavioral fingerprinting.
 
-Diese Untersuchung zeigt, dass verschlüsselter Datenverkehr für einen erfahrenen SOC-Analysten nicht undurchsichtig ist. Durch gezieltes Filtern und Feldextraktion wurden folgende Erkenntnisse gewonnen:
+This investigation demonstrates that encrypted traffic is not opaque to a trained SOC analyst. Through disciplined filtering and field extraction, the following was determined:
 
-- Mehrere SSL/TLS-Sitzungen zu externen Servern wurden identifiziert und kartiert
-- DNS-Auflösungsmuster enthüllten das Verhalten interner Clients und die Server-Infrastruktur
-- Zertifikatsaussteller-Ketten legten die Identität der kontaktierten Dienste offen
-- Avast-Antivirus-Datenverkehr wurde auf drei internen Hosts durch Verhaltens-Fingerprinting identifiziert
-- Der interne Host `192.168.10.9` wurde als einziger Nutzer bestätigt, der mit Ask-Ubuntu-Servern kommuniziert hat
+- Multiple SSL/TLS sessions to external servers were identified and mapped
+- DNS resolution patterns revealed internal client behavior and server infrastructure
+- Certificate issuer chains exposed the identity of contacted services
+- Avast Antivirus traffic was identified across three internal hosts via behavioral fingerprinting
+- Internal host `192.168.10.9` was confirmed as the sole user interacting with Ask Ubuntu servers
 
-Es wurde keine schädliche Aktivität bestätigt, jedoch lässt sich die hier angewandte Methodik direkt auf Threat Hunting, C2-Beacon-Erkennung und die Analyse von verschlüsseltem Malware-Datenverkehr übertragen.
+No malicious activity was confirmed, but the methodology applied here directly translates to threat hunting, C2 beacon detection, and encrypted malware traffic analysis.
 
 ---
 
