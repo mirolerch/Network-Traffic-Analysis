@@ -91,11 +91,11 @@ tshark -r HTTPS_traffic.pcap -Y "ssl.handshake.certificate" -Tfields -e x509sat.
 
 | Certificate Issuer Chain |
 |---|
-| Microsoft Corporation — Microsoft IT SSL SHA2 |
-| Google Inc — Google Internet Authority G2 — GeoTrust |
-| Symantec Class 3 Secure Server CA G4 — VeriSign Trust Network |
-| DigiCert SHA2 High Assurance Server CA — Facebook, Inc. |
-| DigiCert SHA2 Secure Server CA — Grammarly, Inc. |
+| Microsoft Corporation - Microsoft IT SSL SHA2 |
+| Google Inc - Google Internet Authority G2 - GeoTrust |
+| Symantec Class 3 Secure Server CA G4 - VeriSign Trust Network |
+| DigiCert SHA2 High Assurance Server CA - Facebook, Inc. |
+| DigiCert SHA2 Secure Server CA - Grammarly, Inc. |
 
 **Analyst Note:** Certificate issuer extraction without decryption is a legitimate intelligence technique. In threat hunting, self-signed certificates, certificates issued by unknown CAs, or certificates with anomalous validity periods are high-fidelity indicators of malicious infrastructure. All issuers here are legitimate.
 
@@ -202,16 +202,16 @@ tshark -r HTTPS_traffic.pcap -Y "ip contains avast" -Tfields -e ip.src
 
 | Type | Value | Context | Confidence |
 |---|---|---|---|
-| IPv4 — Internal | 192.168.0.136 | Primary TLS-communicating host | High |
-| IPv4 — Internal | 192.168.10.9 | Queried askubuntu.com; running Avast | High |
-| IPv4 — Internal | 192.168.0.1 | Internal gateway; Avast detected | Medium |
-| IPv4 — External | 104.65.234.18 | TLS session target (Akamai) | Informational |
-| IPv4 — External | 134.170.107.72 | TLS session target (Microsoft) | Informational |
-| IPv4 — External | 74.125.68.188 | TLS session target (Google) | Informational |
-| IPv4 — External | 54.230.191.232 | TLS session target (Amazon) | Informational |
-| IPv4 — External | 151.101.1.69 | Ask Ubuntu / Fastly CDN | Informational |
-| IPv4 — DNS | 8.8.8.8 | Direct external DNS usage | Low — Policy Violation |
-| IPv4 — DNS | 8.8.4.4 | Direct external DNS usage | Low — Policy Violation |
+| IPv4 - Internal | 192.168.0.136 | Primary TLS-communicating host | High |
+| IPv4 - Internal | 192.168.10.9 | Queried askubuntu.com; running Avast | High |
+| IPv4 - Internal | 192.168.0.1 | Internal gateway; Avast detected | Medium |
+| IPv4 - External | 104.65.234.18 | TLS session target (Akamai) | Informational |
+| IPv4 - External | 134.170.107.72 | TLS session target (Microsoft) | Informational |
+| IPv4 - External | 74.125.68.188 | TLS session target (Google) | Informational |
+| IPv4 - External | 54.230.191.232 | TLS session target (Amazon) | Informational |
+| IPv4 - External | 151.101.1.69 | Ask Ubuntu / Fastly CDN | Informational |
+| IPv4 - DNS | 8.8.8.8 | Direct external DNS usage | Low - Policy Violation |
+| IPv4 - DNS | 8.8.4.4 | Direct external DNS usage | Low - Policy Violation |
 | Certificate Issuer | DigiCert SHA2 / Facebook | TLS cert for Facebook sessions | Informational |
 | Software | Avast Antivirus | Identified via traffic fingerprint | High |
 
@@ -222,12 +222,12 @@ tshark -r HTTPS_traffic.pcap -Y "ip contains avast" -Tfields -e ip.src
 | Technique ID | Technique Name | Sub-Technique | Relevance to This Investigation |
 |---|---|---|---|
 | T1071.001 | Application Layer Protocol: Web Protocols | HTTPS | Primary communication protocol observed |
-| T1071.004 | Application Layer Protocol: DNS | — | DNS queries used for C2 resolution in real attacks; observed here for baseline |
-| T1572 | Protocol Tunneling | — | HTTPS used to encapsulate all communications |
-| T1040 | Network Sniffing | — | Analyst technique — passive traffic capture |
-| T1016 | System Network Configuration Discovery | — | DNS server identification reveals network architecture |
-| T1518.001 | Software Discovery: Security Software Discovery | — | Avast fingerprinting via traffic analysis |
-| T1567 | Exfiltration Over Web Service | — | HTTPS as exfiltration channel in real incidents |
+| T1071.004 | Application Layer Protocol: DNS | - | DNS queries used for C2 resolution in real attacks; observed here for baseline |
+| T1572 | Protocol Tunneling | - | HTTPS used to encapsulate all communications |
+| T1040 | Network Sniffing | - | Analyst technique - passive traffic capture |
+| T1016 | System Network Configuration Discovery | - | DNS server identification reveals network architecture |
+| T1518.001 | Software Discovery: Security Software Discovery | - | Avast fingerprinting via traffic analysis |
+| T1567 | Exfiltration Over Web Service | - | HTTPS as exfiltration channel in real incidents |
 
 **Note:** No malicious TTPs were confirmed in this capture. The MITRE mapping reflects techniques that this investigation methodology detects and investigates.
 
@@ -340,7 +340,7 @@ AND src_ip: NOT IN [known_av_update_servers]
 
 2. **DNS is a forensic goldmine.** DNS query patterns reveal browsing behavior, software inventory, and potential policy violations. DNS logging should be mandatory in any SOC environment.
 
-3. **String matching inside traffic works for passive fingerprinting.** The `ip contains` filter in tshark matched Avast beacon strings within network packets — this same technique detects malware C2 strings, credential harvesting domains, and data exfiltration markers.
+3. **String matching inside traffic works for passive fingerprinting.** The `ip contains` filter in tshark matched Avast beacon strings within network packets - this same technique detects malware C2 strings, credential harvesting domains, and data exfiltration markers.
 
 4. **tshark field extraction enables scalable analysis.** Using `-Tfields -e field.name` transforms packet analysis into structured data that can feed into SIEM correlation, spreadsheet analysis, or automated IOC extraction pipelines.
 
@@ -450,8 +450,8 @@ Full write-up on GitHub: [link]
 
 ---
 
-**Analyst:** [Your Name]  
-**Contact:** [LinkedIn / GitHub]  
+**Analyst:** Miroslaw Lerch  
+**Contact:** https://www.linkedin.com/in/miroslawlerch/ 
 **Date:** 2026  
 **Classification:** TLP:WHITE
 
