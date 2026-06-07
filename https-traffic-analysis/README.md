@@ -1,5 +1,5 @@
 # SOC Investigation Report
-## Case ID: NTA-2024-HTTPS-001
+## Case ID: NTA-2026-HTTPS-001
 ## Network Traffic Analysis - Encrypted HTTPS Traffic Investigation
 
 ---
