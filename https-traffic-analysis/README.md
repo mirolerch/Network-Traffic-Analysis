@@ -91,11 +91,14 @@ tshark -r HTTPS_traffic.pcap -Y "ssl.handshake.certificate" -Tfields -e x509sat.
 
 | Certificate Issuer Chain |
 |---|
-| Microsoft Corporation - Microsoft IT SSL SHA2 |
-| Google Inc - Google Internet Authority G2 - GeoTrust |
-| Symantec Class 3 Secure Server CA G4 - VeriSign Trust Network |
-| DigiCert SHA2 High Assurance Server CA - Facebook, Inc. |
-| DigiCert SHA2 Secure Server CA - Grammarly, Inc. |
+| Microsoft Corporation — Microsoft IT SSL SHA2 |
+| Google Inc — Google Internet Authority G2 — GeoTrust |
+| Symantec Class 3 Secure Server CA — VeriSign Trust Network |
+| DigiCert SHA2 High Assurance Server CA — Facebook, Inc. |
+| DigiCert SHA2 Secure Server CA — Grammarly, Inc. |
+| Let's Encrypt Authority X3 |
+| GoDaddy Secure Certificate Authority G2 |
+| AVAST Software s.r.o. — DigiCert SHA2 High Assurance Server CA |
 
 **Analyst Note:** Certificate issuer extraction without decryption is a legitimate intelligence technique. In threat hunting, self-signed certificates, certificates issued by unknown CAs, or certificates with anomalous validity periods are high-fidelity indicators of malicious infrastructure. All issuers here are legitimate.
 
