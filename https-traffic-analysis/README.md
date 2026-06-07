@@ -1,10 +1,10 @@
 # SOC Investigation Report
 ## Case ID: NTA-2024-HTTPS-001
-## Network Traffic Analysis — Encrypted HTTPS Traffic Investigation
+## Network Traffic Analysis - Encrypted HTTPS Traffic Investigation
 
 ---
 
-> **Classification:** TLP:WHITE — Portfolio / Training Exercise  
+> **Classification:** TLP:WHITE - Portfolio / Training Exercise  
 > **Analyst:** Miroslaw Lerch  
 > **Platform:** AttackDefense Labs (PentesterAcademy)  
 > **Lab:** Filtering Advanced: HTTPS  
