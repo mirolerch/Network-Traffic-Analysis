@@ -136,7 +136,7 @@ tshark -r HTTPS_traffic.pcap -Y "ssl && ssl.handshake.type==1" -Tfields -e ip.ds
 tshark -r HTTPS_traffic.pcap -Y "dns && dns.flags.response==0" -Tfields -e ip.dst
 ```
 
-**Finding — DNS Servers Used:**
+**Finding - DNS Servers Used:**
 
 | DNS Server IP | Type |
 |---|---|
