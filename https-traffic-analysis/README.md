@@ -323,7 +323,7 @@ AND src_ip: NOT IN [known_av_update_servers]
 
 | Phase | Action | Priority |
 |---|---|---|
-| Containment | Block direct external DNS (port 53) at firewall for all internal hosts | High |
+| Containment | Block outbound port 53 at firewall for all internal hosts - except the approved internal DNS resolver (192.168.0.1 / 192.168.10.1) | High |
 | Containment | Enforce DNS through corporate resolver only | High |
 | Hardening | Implement TLS inspection proxy for corporate traffic | High |
 | Hardening | Alert on unexpected certificate issuer changes for critical domains | Medium |
