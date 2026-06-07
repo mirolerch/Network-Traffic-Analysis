@@ -109,7 +109,7 @@ tshark -r HTTPS_traffic.pcap -Y "ssl.handshake.certificate" -Tfields -e x509sat.
 tshark -r HTTPS_traffic.pcap -Y "ssl && ssl.handshake.type==1" -Tfields -e ip.dst
 ```
 
-**Finding — SSL Server IPs:**
+**Finding - SSL Server IPs:**
 
 | Destination IP | Likely Owner (based on certificate) |
 |---|---|
