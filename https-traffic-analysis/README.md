@@ -9,7 +9,7 @@
 > **Platform:** AttackDefense Labs (PentesterAcademy)  
 > **Lab:** Filtering Advanced: HTTPS  
 > **Date:** 2026  
-> **Status:** CLOSED — Analysis Complete
+> **Status:** CLOSED - Analysis Complete
 
 ---
 
