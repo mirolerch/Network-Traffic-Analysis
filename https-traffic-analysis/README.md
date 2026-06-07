@@ -452,6 +452,6 @@ Full write-up on GitHub: [link]
 
 **Analyst:** [Your Name]  
 **Contact:** [LinkedIn / GitHub]  
-**Date:** 2024  
+**Date:** 2026  
 **Classification:** TLP:WHITE
 
