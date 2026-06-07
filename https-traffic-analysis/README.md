@@ -157,7 +157,7 @@ tshark -r HTTPS_traffic.pcap -Y "dns && dns.flags.response==0" -Tfields -e ip.ds
 tshark -r HTTPS_traffic.pcap -Y "ip contains askubuntu"
 ```
 
-**Finding — Ask Ubuntu Server IPs:**
+**Finding - Ask Ubuntu Server IPs:**
 
 | IP Address | Role |
 |---|---|
@@ -186,7 +186,7 @@ tshark -r HTTPS_traffic.pcap -Y "ip.dst==151.101.1.69 || ip.dst==151.101.193.69 
 tshark -r HTTPS_traffic.pcap -Y "ip contains avast" -Tfields -e ip.src
 ```
 
-**Finding — Hosts Running Avast:**
+**Finding - Hosts Running Avast:**
 
 | Internal IP | Role |
 |---|---|
