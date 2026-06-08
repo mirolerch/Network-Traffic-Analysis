@@ -17,10 +17,10 @@
 
 On 2026-05-29 at approximately 14:53 UTC, endpoint `10.0.2.10` at Astley Financial triggered multiple SOC detections consistent with an active **Lumma Stealer (LummaC2)** infection. Analysis of `tcpdump_challenge.pcap` (1,344 packets) using exclusively Linux CLI tools confirmed four distinct threat activities:
 
-- **Lumma Stealer C2 beacon** — hardcoded user agent `TeslaBrowser/5.5` communicating with Telegram dead-drop resolver `t.me/+zz0192lskaaa`
-- **FTP credential brute-force** against `194.108.117.16:21` — 5 attempts across rotating source ports, 1 successful login (`demo:password`)
-- **Credential exfiltration** via HTTP POST — employee credentials `bsmith:ilovecats9102` transmitted in cleartext to `93.184.215.14:80`
-- **ICMP reconnaissance** — 132 packets observed including traffic to Cloudflare-fronted infrastructure (`172.67.72.15`, ASN 13335)
+- **Lumma Stealer C2 beacon** - hardcoded user agent `TeslaBrowser/5.5` communicating with Telegram dead-drop resolver `t.me/+zz0192lskaaa`
+- **FTP credential brute-force** against `194.108.117.16:21` - 5 attempts across rotating source ports, 1 successful login (`demo:password`)
+- **Credential exfiltration** via HTTP POST - employee credentials `bsmith:ilovecats9102` transmitted in cleartext to `93.184.215.14:80`
+- **ICMP reconnaissance** - 132 packets observed including traffic to Cloudflare-fronted infrastructure (`172.67.72.15`, ASN 13335)
 
 **Business Impact:** Active credential theft confirmed on a financial institution endpoint. One FTP session successfully authenticated. Employee credentials exfiltrated over unencrypted HTTP. Immediate containment required.
 
