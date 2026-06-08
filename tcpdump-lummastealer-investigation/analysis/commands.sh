@@ -1,9 +1,9 @@
 #!/bin/bash
 # ============================================================
 # SOC Investigation: Lumma Stealer
-# Case ID: SOC-2024-0529-001
+# Case ID: SOC-2026-0529-001
 # Analyst: mirolerch
-# Date: 2024-05-29
+# Date: 2026-05-29
 # Tool: tcpdump
 # ============================================================
 
