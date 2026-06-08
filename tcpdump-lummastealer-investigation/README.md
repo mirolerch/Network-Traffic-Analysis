@@ -83,7 +83,7 @@ On 2026-05-29 at approximately 14:53 UTC, endpoint `10.0.2.10` at Astley Financi
 
     whois -h whois.cymru.com " -v 172.67.72.15"
 
-**Result:** ASN 13335 — CLOUDFLARENET (Cloudflare, Inc.)
+**Result:** ASN 13335 - CLOUDFLARENET (Cloudflare, Inc.)
 
 Cloudflare commonly fronts legitimate services but is also widely used to mask malicious C2 infrastructure. Flagged for further investigation.
 
