@@ -217,7 +217,7 @@ Post-authentication file retrieval confirmed. File metadata also queried — las
 
 ---
 
-### Question 11 — Bonus: YouTube Video
+### Question 11 — YouTube Video
 
 **Objective:** Identify the YouTube video accessed during the session.
 
