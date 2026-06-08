@@ -9,13 +9,14 @@
 **Analyst:** mirolerch
 **Date:** 2026-05-29
 **Classification:** TLP:WHITE
-**Status:** Closed - Confirmed Malware Activity
+**Status:** Closed — Confirmed Malware Activity
+**Source:** TCM Security SOC101 — Network Security Challenge
 
 ---
 
 ## Executive Summary
 
-On 2024-05-29 at approximately 14:53 UTC, endpoint `10.0.2.10` at Astley Financial triggered multiple SOC detections consistent with an active **Lumma Stealer (LummaC2)** infection. Analysis of `tcpdump_challenge.pcap` (1,344 packets) using exclusively Linux CLI tools confirmed four distinct threat activities:
+On 2026-05-29 at approximately 14:53 UTC, endpoint `10.0.2.10` at Astley Financial triggered multiple SOC detections consistent with an active **Lumma Stealer (LummaC2)** infection. Analysis of `tcpdump_challenge.pcap` (1,344 packets) using exclusively Linux CLI tools confirmed four distinct threat activities:
 
 - **Lumma Stealer C2 beacon** — hardcoded user agent `TeslaBrowser/5.5` communicating with Telegram dead-drop resolver `t.me/+zz0192lskaaa`
 - **FTP credential brute-force** against `194.108.117.16:21` — 5 attempts across rotating source ports, 1 successful login (`demo:password`)
@@ -55,20 +56,23 @@ On 2024-05-29 at approximately 14:53 UTC, endpoint `10.0.2.10` at Astley Financi
 
 1,344 packets is a manageable capture for full manual CLI review.
 
+![Q1](screenshots/01_packet_count.png)
+
 ---
 
 ### Question 2 — ICMP Packet Count
 
 **Objective:** Identify reconnaissance or keep-alive activity via ICMP.
 
-**Commands:**
+**Command:**
 
-    tcpdump icmp -r tcpdump_challenge.pcap --count
-    tcpdump -r tcpdump_challenge.pcap icmp | wc -l
+    tcpdump -r tcpdump_challenge.pcap icmp --count
 
 **Result:** 132 ICMP packets
 
 132 ICMP packets is anomalous for a standard endpoint. Consistent with host discovery sweeps or C2 keep-alive mechanisms.
+
+![Q2](screenshots/02_icmp_count.png)
 
 ---
 
@@ -76,14 +80,15 @@ On 2024-05-29 at approximately 14:53 UTC, endpoint `10.0.2.10` at Astley Financi
 
 **Objective:** Identify who the endpoint was pinging.
 
-**Commands:**
+**Command:**
 
-    tcpdump icmp -r tcpdump_challenge.pcap
     whois -h whois.cymru.com " -v 172.67.72.15"
 
 **Result:** ASN 13335 — CLOUDFLARENET (Cloudflare, Inc.)
 
 Cloudflare commonly fronts legitimate services but is also widely used to mask malicious C2 infrastructure. Flagged for further investigation.
+
+![Q3](screenshots/03_asn_lookup.png)
 
 ---
 
@@ -91,14 +96,15 @@ Cloudflare commonly fronts legitimate services but is also widely used to mask m
 
 **Objective:** Detect outbound data exfiltration attempts.
 
-**Commands:**
+**Command:**
 
-    tcpdump -r tcpdump_challenge.pcap -n port 80 | grep -E "POST"
-    tcpdump -tt -r tcpdump_challenge.pcap | grep "POST"
+    tcpdump -r tcpdump_challenge.pcap -n | grep -E "POST"
 
 **Result:** 1 HTTP POST request — `10.0.2.10:34726 → 93.184.215.14:80`
 
 A single POST to a bare `/` path is a common pattern for C2 data exfiltration.
+
+![Q4](screenshots/04_http_post.png)
 
 ---
 
@@ -106,15 +112,15 @@ A single POST to a bare `/` path is a common pattern for C2 data exfiltration.
 
 **Objective:** Extract cleartext credentials from HTTP packet payloads.
 
-**Commands:**
+**Command:**
 
-    tcpdump -tt -r tcpdump_challenge.pcap -A | grep "password"
     tcpdump -r tcpdump_challenge.pcap -A | grep password
-    tcpdump -r tcpdump_challenge.pcap port 80 -A | grep password
 
 **Result:** `username=bsmith&password=ilovecats9102`
 
 **Finding:** Employee credentials for user `bsmith` transmitted in cleartext via HTTP POST. Active exfiltration confirmed.
+
+![Q5](screenshots/05_credentials.png)
 
 ---
 
@@ -122,14 +128,15 @@ A single POST to a bare `/` path is a common pattern for C2 data exfiltration.
 
 **Objective:** Identify all active services on the network.
 
-**Commands:**
+**Command:**
 
-    tcpdump -tt -r tcpdump_challenge.pcap -n tcp | cut -d " " -f 3 | cut -d "." -f 5 | sort | uniq -c | sort -nr
-    tcpdump -nn -r tcpdump_challenge.pcap -n tcp | awk '{print $5}' | cut -d. -f5 | sort | uniq -c | sort -nr
+    tcpdump -tt -r tcpdump_challenge.pcap -n tcp | cut -d " " -f 3 | cut -d "." -f 5 | sort | uniq -c | sort -nr | awk '$2 <= 1023'
 
 **Result:** Port 80 (HTTP) and Port 21 (FTP)
 
 FTP on port 21 is unencrypted and a common target for credential attacks.
+
+![Q6](screenshots/06_ports.png)
 
 ---
 
@@ -137,12 +144,9 @@ FTP on port 21 is unencrypted and a common target for credential attacks.
 
 **Objective:** Identify all FTP authentication attempts and determine valid credentials.
 
-**Commands:**
+**Command:**
 
-    tcpdump -nn -r tcpdump_challenge.pcap -A port 21 | grep -E 'USER|PASS'
-    tcpdump -nn -r tcpdump_challenge.pcap -A port 21 | grep -E 'USER|PASS|230|530'
-    tcpdump -A -r tcpdump_challenge.pcap port 21 | grep -i USER
-    tcpdump -A -r tcpdump_challenge.pcap port 21 | grep -i PASS
+    tcpdump -tt -r tcpdump_challenge.pcap -A host 194.108.117.16 | grep -E '230|530|USER|PASS'
 
 **FTP Response Codes:** 230 = Login successful / 530 = Authentication rejected
 
@@ -158,20 +162,23 @@ FTP on port 21 is unencrypted and a common target for credential attacks.
 
 **Finding:** Classic low-and-slow credential spray using rotating source ports per attempt to evade rate-limiting. Fifth attempt succeeded with default credentials `demo:password`.
 
+![Q7](screenshots/07_ftp_bruteforce.png)
+
 ---
 
 ### Question 8 — File Retrieved via FTP
 
 **Objective:** Identify what data was accessed post-authentication.
 
-**Commands:**
+**Command:**
 
-    tcpdump -nn -A -r tcpdump_challenge.pcap port 21 | grep 'RETR'
-    tcpdump -A -r tcpdump_challenge.pcap port 21 | grep -i RETR
+    tcpdump -tt -r tcpdump_challenge.pcap host 194.108.117.16 | grep "txt"
 
 **Result:** RETR readme.txt
 
 Post-authentication file retrieval confirmed. File metadata also queried — last modified: 20230919111203.
+
+![Q8](screenshots/08_ftp_retr.png)
 
 ---
 
@@ -179,11 +186,9 @@ Post-authentication file retrieval confirmed. File metadata also queried — las
 
 **Objective:** Identify the malware family from HTTP traffic.
 
-**Commands:**
+**Command:**
 
-    tcpdump -A -r tcpdump_challenge.pcap port 80 | grep -i "User-Agent"
-    tcpdump -A -r tcpdump_challenge.pcap port 80 | grep -i "User-Agent" | sort | uniq
-    tcpdump -nn -r tcpdump_challenge.pcap port 80 -A | grep 'User-Agent'
+    tcpdump -nn -r tcpdump_challenge.pcap -A -s1500 -l | egrep -i "User-Agent:|Host:"
 
 **Result:** User-Agent: TeslaBrowser/5.5
 
@@ -193,17 +198,17 @@ Post-authentication file retrieval confirmed. File metadata also queried — las
 - [Malpedia — win.lumma](https://malpedia.caad.fkie.fraunhofer.de/details/win.lumma)
 - [Darktrace — Rise of Lumma Info-Stealer](https://darktrace.com/blog/the-rise-of-the-lumma-info-stealer)
 
+![Q9](screenshots/09_useragent_I.png)
+
 ---
 
 ### Question 10 — C2 URL
 
 **Objective:** Identify the full C2 communication URL.
 
-**Commands:**
+**Command:**
 
-    tcpdump -A -r tcpdump_challenge.pcap port 80 | grep -B 10 "TeslaBrowser"
-    tcpdump -A -r tcpdump_challenge.pcap port 80 | grep -A 20 "/+zz0192lskaaa"
-    tcpdump -nn -r tcpdump_challenge.pcap port 80 -A
+    tcpdump -nn -r tcpdump_challenge.pcap -A -s1500 -l | grep -B15 -A15 "TeslaBrowser/5.5"
 
 **Raw Request:** GET /+zz0192lskaaa HTTP/1.1 — Host: t.me — User-Agent: TeslaBrowser/5.5
 
@@ -215,15 +220,16 @@ Post-authentication file retrieval confirmed. File metadata also queried — las
 
 **VirusTotal:** [URL Analysis](https://www.virustotal.com/gui/url/4a12f6edb36c6795c53a249fe015265a63b92f91ce3755245453c6f9e02e9e8f)
 
+![Q10](screenshots/10_c2_url_png.png)
+
 ---
 
-### Question 11 — YouTube Video
+### Question 11 — Bonus: YouTube Video
 
 **Objective:** Identify the YouTube video accessed during the session.
 
-**Commands:**
+**Command:**
 
-    tcpdump -nn -r tcpdump_challenge.pcap port 80 -A | grep youtube
     tcpdump -nn -r tcpdump_challenge.pcap port 80 -A | grep "Location:"
 
 **Result:** https://www.youtube.com/watch?v=dQw4w9WgXcQ
@@ -325,7 +331,7 @@ HTTP POST to 93.184.215.14 on port 80. Body contains username=bsmith&password=il
 | Tool | Purpose |
 |------|---------|
 | tcpdump | Primary packet capture analysis |
-| grep / cut / sort / uniq / wc | Traffic aggregation and pattern matching |
+| grep / cut / sort / uniq / awk | Traffic aggregation and pattern matching |
 | whois Team Cymru | IP geolocation and ASN lookup |
 | Malpedia | Malware family identification |
 | VirusTotal | URL reputation analysis |
