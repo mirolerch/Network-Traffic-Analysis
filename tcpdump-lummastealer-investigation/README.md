@@ -324,4 +324,4 @@ HTTP POST to 93.184.215.14 on port 80. Body contains username=bsmith&password=il
 
 ---
 
-*Investigation conducted in a controlled lab environment — TCM Security SOC101 Network Security Challenge. All findings based on provided packet capture data.*
+*Investigation conducted in a controlled lab environment - TCM Security SOC101 Network Security Challenge. All findings based on provided packet capture data.*
