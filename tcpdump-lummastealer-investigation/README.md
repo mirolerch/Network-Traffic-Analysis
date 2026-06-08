@@ -9,8 +9,7 @@
 **Analyst:** miro lerch
 **Date:** 2026-05-29
 **Classification:** TLP:WHITE
-**Status:** Closed — Confirmed Malware Activity
-**Source:** TCM Security SOC101 — Network Security Challenge
+**Status:** Closed - Confirmed Malware Activity
 
 ---
 
