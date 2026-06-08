@@ -7,10 +7,9 @@
 
 **Case ID:** SOC-2024-0529-001  
 **Analyst:** mirolerch  
-**Date:** 2024-05-29  
+**Date:** 2026-05-29  
 **Classification:** TLP:WHITE  
 **Status:** Closed — Confirmed Malware Activity  
-**Source:** TCM Security SOC101 — Network Security Challenge  
 
 ---
 
