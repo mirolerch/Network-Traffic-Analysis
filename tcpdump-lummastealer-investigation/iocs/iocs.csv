@@ -1,1 +1,14 @@
-
+type,value,context,confidence,tlp
+ip,10.0.2.10,Infected endpoint (internal),High,WHITE
+ip,149.154.167.99,Lumma Stealer C2 discovery host (Telegram infrastructure),High,WHITE
+ip,194.108.117.16,FTP brute-force target,High,WHITE
+ip,93.184.215.14,HTTP POST exfiltration destination,High,WHITE
+ip,172.67.72.15,Cloudflare IP — ICMP peer / possible C2 fronting,Medium,WHITE
+user-agent,TeslaBrowser/5.5,Lumma Stealer hardcoded user agent string,High,WHITE
+url,t.me/+zz0192lskaaa,Telegram dead-drop resolver used for C2 discovery,High,WHITE
+url,http://149.154.167.99/+zz0192lskaaa,Raw C2 beacon GET request,High,WHITE
+credential,demo:password,Compromised FTP account on 194.108.117.16,High,WHITE
+credential,bsmith:ilovecats9102,Exfiltrated employee credentials (HTTP POST),High,WHITE
+filename,readme.txt,File retrieved from FTP server post-authentication,Medium,WHITE
+port,21,FTP — unencrypted protocol targeted for brute-force,Medium,WHITE
+asn,AS62041,Telegram ASN hosting C2 discovery endpoint,Low,WHITE
