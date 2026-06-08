@@ -99,7 +99,7 @@ Cloudflare commonly fronts legitimate services but is also widely used to mask m
 
     tcpdump -r tcpdump_challenge.pcap -n | grep -E "POST"
 
-**Result:** 1 HTTP POST request — `10.0.2.10:34726 → 93.184.215.14:80`
+**Result:** 1 HTTP POST request - `10.0.2.10:34726 → 93.184.215.14:80`
 
 A single POST to a bare `/` path is a common pattern for C2 data exfiltration.
 
