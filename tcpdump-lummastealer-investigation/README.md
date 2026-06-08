@@ -223,20 +223,6 @@ Post-authentication file retrieval confirmed. File metadata also queried - last 
 
 ---
 
-### Question 11 — Bonus: YouTube Video
-
-**Objective:** Identify the YouTube video accessed during the session.
-
-**Command:**
-
-    tcpdump -nn -r tcpdump_challenge.pcap port 80 -A | grep "Location:"
-
-**Result:** https://www.youtube.com/watch?v=dQw4w9WgXcQ
-
-**Video:** Rick Astley — Never Gonna Give You Up (Official Music Video)
-
----
-
 ## Attack Chain
 
 **Step 1 - Execution**
