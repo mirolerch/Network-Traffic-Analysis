@@ -27,9 +27,9 @@ Traffic flows were analysed across countries and days. The dominant destination 
 ### IP Analysis
 129 source IPs and 307 destination IPs were identified across 3.4K flows. The top source IPs by bytes sent were:
 
-- 192.168.10.9 — 969.2K sent / 34.1M received
-- 192.168.252.128 — 930.4K sent / 21M received
-- 192.168.0.136 — 741.1K sent / 18.9M received
+- 192.168.10.9 - 969.2K sent / 34.1M received
+- 192.168.252.128 - 930.4K sent / 21M received
+- 192.168.0.136 - 741.1K sent / 18.9M received
 
 All three top IPs show significantly higher bytes received than sent, consistent with the 96% inbound traffic observation. IPs 192.168.0.1 and 192.168.0.165 show bytes sent with zero bytes received — potentially indicative of broadcast or one-way communication traffic.
 
