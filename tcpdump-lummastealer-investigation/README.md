@@ -219,7 +219,7 @@ Post-authentication file retrieval confirmed. File metadata also queried - last 
 
 **VirusTotal:** [URL Analysis](https://www.virustotal.com/gui/url/4a12f6edb36c6795c53a249fe015265a63b92f91ce3755245453c6f9e02e9e8f)
 
-![Q10](screenshots/10_c2_url_png.png)
+![Q10](screenshots/10_c2_url.png)
 
 ---
 
