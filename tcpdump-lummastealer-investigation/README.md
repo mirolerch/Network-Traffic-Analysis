@@ -37,7 +37,7 @@ On 2026-05-29 at approximately 14:53 UTC, endpoint `10.0.2.10` at Astley Financi
 **Targets:** Cryptocurrency wallets, 2FA browser extensions, stored browser credentials
 **Exfiltration Method:** HTTP POST with hardcoded user agent `TeslaBrowser/5.5`
 **C2 Discovery:** Telegram dead-drop resolver
-**Reference:** [Malpedia — win.lumma](https://malpedia.caad.fkie.fraunhofer.de/details/win.lumma)
+**Reference:** [Malpedia - win.lumma](https://malpedia.caad.fkie.fraunhofer.de/details/win.lumma)
 
 ---
 
