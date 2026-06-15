@@ -93,7 +93,7 @@ To build a complete picture of network activity, all well-known TCP ports (0–1
 
     tcpdump -tt -r tcpdump_challenge.pcap -n tcp | cut -d " " -f 3 | cut -d "." -f 5 | sort | uniq -c | sort -nr | awk '$2 <= 1023'
 
-Two services were identified: **port 80 (HTTP)** and **port 21 (FTP)**. FTP on port 21 transmits credentials in cleartext and is a common target for brute-force attacks — warranting immediate deep-dive.
+Two services were identified: **port 80 (HTTP)** and **port 21 (FTP)**. FTP on port 21 transmits credentials in cleartext and is a common target for brute-force attacks - warranting immediate deep-dive.
 
 ![Q6](screenshots/06_ports.png)
 
