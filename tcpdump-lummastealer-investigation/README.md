@@ -70,7 +70,7 @@ The lookup returned **ASN 13335 - CLOUDFLARENET (Cloudflare, Inc.)**. While Clou
 
 ---
 
-### HTTP POST — Credential Exfiltration
+### HTTP POST - Credential Exfiltration
 
 Outbound HTTP traffic was filtered for POST requests to identify data exfiltration attempts:
 
@@ -87,7 +87,7 @@ The payload contained `username=bsmith&password=ilovecats9102` - employee creden
 
 ---
 
-### Active Services — Port Enumeration
+### Active Services - Port Enumeration
 
 To build a complete picture of network activity, all well-known TCP ports (0–1023) active in the capture were enumerated using a cut/sort/uniq pipeline:
 
@@ -142,7 +142,7 @@ The User-Agent string `TeslaBrowser/5.5` was identified. No legitimate browser u
 
 ---
 
-### C2 Infrastructure — Telegram Dead-Drop Resolver
+### C2 Infrastructure - Telegram Dead-Drop Resolver
 
 Full context around the TeslaBrowser/5.5 request was extracted to reconstruct the C2 communication:
 
