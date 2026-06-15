@@ -6,7 +6,7 @@
 ![MITRE](https://img.shields.io/badge/MITRE-T1102.002%20|%20T1110.003%20|%20T1048.003-orange)
 
 **Case ID:** SOC-2026-0529-001
-**Analyst:** miro lerch
+**Analyst:** Miro Lerch
 **Date:** 2026-05-29
 **Classification:** TLP:WHITE
 **Status:** Closed - Confirmed Malware Activity
