@@ -43,113 +43,69 @@ On 2026-05-29 at approximately 14:53 UTC, endpoint `10.0.2.10` at Astley Financi
 
 ## Investigation Walkthrough
 
-### Question 1 - Total Packet Count
+### Capture Scope
 
-**Objective:** Establish the scope of the capture.
-
-**Command:**
+Initial triage began with establishing the size of the capture. The PCAP contained **1,344 packets** — a manageable volume for full manual CLI analysis without sampling.
 
     tcpdump -r tcpdump_challenge.pcap --count
-
-**Result:** 1344 packets
-
-1,344 packets is a manageable capture for full manual CLI review.
 
 ![Q1](screenshots/01_packet_count.png)
 
 ---
 
-### Question 2 - ICMP Packet Count
+### ICMP Traffic Analysis
 
-**Objective:** Identify reconnaissance or keep-alive activity via ICMP.
-
-**Command:**
+Protocol distribution was the next priority. A filter for ICMP traffic revealed **132 packets** — anomalous for a standard endpoint and inconsistent with normal user activity. Volume at this level is consistent with host discovery sweeps or C2 keep-alive mechanisms.
 
     tcpdump -r tcpdump_challenge.pcap icmp --count
 
-**Result:** 132 ICMP packets
-
-132 ICMP packets is anomalous for a standard endpoint. Consistent with host discovery sweeps or C2 keep-alive mechanisms.
-
-![Q2](screenshots/02_icmp_count.png)
-
----
-
-### Question 3 - ASN of ICMP Destination
-
-**Objective:** Identify who the endpoint was pinging.
-
-**Command:**
+To identify the destination, a WHOIS lookup was performed against the target IP observed in the ICMP stream:
 
     whois -h whois.cymru.com " -v 172.67.72.15"
 
-**Result:** ASN 13335 - CLOUDFLARENET (Cloudflare, Inc.)
+The lookup returned **ASN 13335 — CLOUDFLARENET (Cloudflare, Inc.)**. While Cloudflare hosts legitimate services, it is also widely abused to mask malicious C2 infrastructure behind CDN fronting. This IP was flagged for correlation in later stages.
 
-Cloudflare commonly fronts legitimate services but is also widely used to mask malicious C2 infrastructure. Flagged for further investigation.
-
+![Q2](screenshots/02_icmp_count.png)
 ![Q3](screenshots/03_asn_lookup.png)
 
 ---
 
-### Question 4 - HTTP POST Requests
+### HTTP POST — Credential Exfiltration
 
-**Objective:** Detect outbound data exfiltration attempts.
-
-**Command:**
+Outbound HTTP traffic was filtered for POST requests to identify data exfiltration attempts:
 
     tcpdump -r tcpdump_challenge.pcap -n | grep -E "POST"
 
-**Result:** 1 HTTP POST request - `10.0.2.10:34726 → 93.184.215.14:80`
-
-A single POST to a bare `/` path is a common pattern for C2 data exfiltration.
-
-![Q4](screenshots/04_http_post.png)
-
----
-
-### Question 5 - Credentials in HTTP Payload
-
-**Objective:** Extract cleartext credentials from HTTP packet payloads.
-
-**Command:**
+A single HTTP POST was identified: `10.0.2.10:34726 → 93.184.215.14:80`. A bare `/` path with a POST body is a common pattern in C2 data exfiltration. Payload inspection confirmed the suspicion:
 
     tcpdump -r tcpdump_challenge.pcap -A | grep password
 
-**Result:** `username=bsmith&password=ilovecats9102`
+The payload contained `username=bsmith&password=ilovecats9102` — employee credentials transmitted in cleartext over unencrypted HTTP. Active exfiltration confirmed.
 
-**Finding:** Employee credentials for user `bsmith` transmitted in cleartext via HTTP POST. Active exfiltration confirmed.
-
+![Q4](screenshots/04_http_post.png)
 ![Q5](screenshots/05_credentials.png)
 
 ---
 
-### Question 6 - Well-Known TCP Ports
+### Active Services — Port Enumeration
 
-**Objective:** Identify all active services on the network.
-
-**Command:**
+To build a complete picture of network activity, all well-known TCP ports (0–1023) active in the capture were enumerated using a cut/sort/uniq pipeline:
 
     tcpdump -tt -r tcpdump_challenge.pcap -n tcp | cut -d " " -f 3 | cut -d "." -f 5 | sort | uniq -c | sort -nr | awk '$2 <= 1023'
 
-**Result:** Port 80 (HTTP) and Port 21 (FTP)
-
-FTP on port 21 is unencrypted and a common target for credential attacks.
+Two services were identified: **port 80 (HTTP)** and **port 21 (FTP)**. FTP on port 21 transmits credentials in cleartext and is a common target for brute-force attacks — warranting immediate deep-dive.
 
 ![Q6](screenshots/06_ports.png)
 
 ---
 
-### Question 7 - FTP Credential Brute-Force
+### FTP Credential Brute-Force
 
-**Objective:** Identify all FTP authentication attempts and determine valid credentials.
-
-**Command:**
+All FTP authentication exchanges against `194.108.117.16` were extracted by filtering for FTP response codes and credential fields:
 
     tcpdump -tt -r tcpdump_challenge.pcap -A host 194.108.117.16 | grep -E '230|530|USER|PASS'
 
-**FTP Response Codes:** 230 = Login successful / 530 = Authentication rejected
-
-**All Attempts:**
+Five attempts were recorded across rotating source ports — a deliberate technique to evade per-port rate limiting:
 
 | Timestamp | Source Port | Username | Password | Response |
 |-----------|-------------|----------|----------|----------|
@@ -159,39 +115,24 @@ FTP on port 21 is unencrypted and a common target for credential attacks.
 | 14:54:12 | 40122 | admin | password123 | 530 Rejected |
 | 14:54:16 | **40124** | **demo** | **password** | **230 Logged in** |
 
-**Finding:** Classic low-and-slow credential spray using rotating source ports per attempt to evade rate-limiting. Fifth attempt succeeded with default credentials `demo:password`.
-
-![Q7](screenshots/07_ftp_bruteforce.png)
-
----
-
-### Question 8 - File Retrieved via FTP
-
-**Objective:** Identify what data was accessed post-authentication.
-
-**Command:**
+The fifth attempt succeeded with default credentials `demo:password`. Following authentication, the session was used to retrieve a file:
 
     tcpdump -tt -r tcpdump_challenge.pcap host 194.108.117.16 | grep "txt"
 
-**Result:** RETR readme.txt
+The command `RETR readme.txt` was observed post-authentication. File metadata confirmed last modification at `20230919111203`.
 
-Post-authentication file retrieval confirmed. File metadata also queried - last modified: 20230919111203.
-
+![Q7](screenshots/07_ftp_bruteforce.png)
 ![Q8](screenshots/08_ftp_retr.png)
 
 ---
 
-### Question 9 - Malware Identification via User-Agent
+### Malware Identification — User-Agent Analysis
 
-**Objective:** Identify the malware family from HTTP traffic.
-
-**Command:**
+HTTP headers were extracted to identify the client making outbound requests:
 
     tcpdump -nn -r tcpdump_challenge.pcap -A -s1500 -l | egrep -i "User-Agent:|Host:"
 
-**Result:** User-Agent: TeslaBrowser/5.5
-
-**Finding:** `TeslaBrowser/5.5` is the hardcoded user agent of Lumma Stealer. No legitimate browser uses this string. OSINT search on `TeslaBrowser/5.5 malware` immediately confirms the malware family.
+The User-Agent string `TeslaBrowser/5.5` was identified. No legitimate browser uses this string. OSINT correlation immediately confirmed this as the hardcoded user agent of **Lumma Stealer** — an information stealer distributed as Malware-as-a-Service on Russian-speaking cybercrime forums since August 2022.
 
 **References:**
 - [Malpedia - win.lumma](https://malpedia.caad.fkie.fraunhofer.de/details/win.lumma)
@@ -201,21 +142,17 @@ Post-authentication file retrieval confirmed. File metadata also queried - last 
 
 ---
 
-### Question 10 - C2 URL
+### C2 Infrastructure — Telegram Dead-Drop Resolver
 
-**Objective:** Identify the full C2 communication URL.
-
-**Command:**
+Full context around the TeslaBrowser/5.5 request was extracted to reconstruct the C2 communication:
 
     tcpdump -nn -r tcpdump_challenge.pcap -A -s1500 -l | grep -B15 -A15 "TeslaBrowser/5.5"
 
-**Raw Request:** GET /+zz0192lskaaa HTTP/1.1 - Host: t.me - User-Agent: TeslaBrowser/5.5
+The malware sent `GET /+zz0192lskaaa HTTP/1.1` to `t.me`. The server responded with `HTTP/1.1 301 Moved Permanently` redirecting to `https://t.me/+zz0192lskaaa`.
 
-**Server Response:** HTTP/1.1 301 Moved Permanently - Location: https://t.me/+zz0192lskaaa
+**Defanged C2 URL:** `hxxps[://]t[.]me/+zz0192lskaaa`
 
-**Defanged URL:** hxxps[://]t[.]me/+zz0192lskaaa
-
-**Finding:** Lumma Stealer uses Telegram as a dead-drop resolver to retrieve the current C2 server address - allowing operators to rotate infrastructure without recompiling the binary.
+Lumma Stealer uses Telegram as a dead-drop resolver — the Telegram channel contains the current C2 server address, allowing operators to rotate infrastructure without recompiling the binary. This makes domain-based blocking ineffective and significantly increases operational resilience for the threat actor.
 
 **VirusTotal:** [URL Analysis](https://www.virustotal.com/gui/url/4a12f6edb36c6795c53a249fe015265a63b92f91ce3755245453c6f9e02e9e8f)
 
@@ -225,23 +162,23 @@ Post-authentication file retrieval confirmed. File metadata also queried - last 
 
 ## Attack Chain
 
-**Step 1 - Execution**
-Lumma Stealer executes on endpoint 10.0.2.10.
+**Step 1 — Execution**
+Lumma Stealer executes on endpoint `10.0.2.10`.
 
-**Step 2 - C2 Discovery (T1102.002)**
-The malware sends GET /+zz0192lskaaa to t.me with User-Agent TeslaBrowser/5.5. The server returns a 301 redirect to https://t.me/+zz0192lskaaa. Telegram is used as a dead-drop resolver to retrieve the active C2 server address.
+**Step 2 — C2 Discovery (T1102.002)**
+The malware sends `GET /+zz0192lskaaa` to `t.me` with User-Agent `TeslaBrowser/5.5`. The server returns a 301 redirect to `https://t.me/+zz0192lskaaa`. Telegram is used as a dead-drop resolver to retrieve the active C2 server address.
 
-**Step 3 - Reconnaissance (T1046)**
-132 ICMP packets sent to 172.67.72.15 (ASN 13335 — Cloudflare). 143 DNS queries sent to 8.8.8.8.
+**Step 3 — Reconnaissance (T1046)**
+132 ICMP packets sent to `172.67.72.15` (ASN 13335 — Cloudflare). 143 DNS queries sent to `8.8.8.8`.
 
-**Step 4 - Credential Access (T1110.003)**
-FTP credential spray against 194.108.117.16 on port 21. Five attempts using rotating source ports. Four rejected with code 530. Fifth attempt with demo:password succeeds with code 230.
+**Step 4 — Credential Access (T1110.003)**
+FTP credential spray against `194.108.117.16` on port 21. Five attempts using rotating source ports. Four rejected with code 530. Fifth attempt with `demo:password` succeeds with code 230.
 
-**Step 5 - Collection**
-Authenticated FTP session used to retrieve readme.txt. File metadata queried — last modified 20230919111203.
+**Step 5 — Collection**
+Authenticated FTP session used to retrieve `readme.txt`. File metadata queried — last modified `20230919111203`.
 
-**Step 6 - Exfiltration (T1048.003)**
-HTTP POST to 93.184.215.14 on port 80. Body contains username=bsmith&password=ilovecats9102 in cleartext.
+**Step 6 — Exfiltration (T1048.003)**
+HTTP POST to `93.184.215.14` on port 80. Body contains `username=bsmith&password=ilovecats9102` in cleartext.
 
 ---
 
@@ -277,37 +214,23 @@ HTTP POST to 93.184.215.14 on port 80. Body contains username=bsmith&password=il
 
 ## Incident Response Actions
 
-**Immediate - P1 within 1 hour**
-- Isolate 10.0.2.10 from the network
-- Block 149.154.167.99, 93.184.215.14, 194.108.117.16 at perimeter firewall
-- Block TeslaBrowser/5.5 at web proxy
-- Revoke FTP account demo on 194.108.117.16
-- Force password reset for user bsmith
+**Immediate — P1 within 1 hour**
+- Isolate `10.0.2.10` from the network
+- Block `149.154.167.99`, `93.184.215.14`, `194.108.117.16` at perimeter firewall
+- Block `TeslaBrowser/5.5` at web proxy
+- Revoke FTP account `demo` on `194.108.117.16`
+- Force password reset for user `bsmith`
 
-**Short-Term - P2 within 24 hours**
-- Preserve full disk image of 10.0.2.10 before remediation
-- Hunt all proxy and firewall logs for historical TeslaBrowser/5.5 traffic
-- Audit all accounts on 194.108.117.16 and remove all default credentials
-- Review DNS logs from 10.0.2.10 for additional C2 domains
+**Short-Term — P2 within 24 hours**
+- Preserve full disk image of `10.0.2.10` before remediation
+- Hunt all proxy and firewall logs for historical `TeslaBrowser/5.5` traffic
+- Audit all accounts on `194.108.117.16` and remove all default credentials
+- Review DNS logs from `10.0.2.10` for additional C2 domains
 
-**Medium-Term - P3 within 1 week**
+**Medium-Term — P3 within 1 week**
 - Replace FTP with SFTP or disable entirely
 - Deploy user agent blocklist at web proxy for known malware UAs
 - Conduct organization-wide Lumma Stealer IOC hunt
-
----
-
-## Skills Demonstrated
-
-| Skill | Evidence |
-|-------|---------|
-| tcpdump packet analysis | All 11 findings derived from CLI - no GUI tools used |
-| Protocol analysis FTP/HTTP/ICMP | FTP response codes, HTTP methods, ICMP patterns |
-| Malware identification | Lumma Stealer identified via TeslaBrowser/5.5 OSINT |
-| IOC extraction | IPs, URLs, credentials, filenames from raw pcap |
-| MITRE ATT&CK mapping | 6 techniques across 5 tactics |
-| Incident response | Prioritized IR actions with clear ownership |
-| OSINT | Team Cymru whois for ASN lookup, VirusTotal URL analysis |
 
 ---
 
@@ -324,4 +247,4 @@ HTTP POST to 93.184.215.14 on port 80. Body contains username=bsmith&password=il
 
 ---
 
-*Investigation conducted in a controlled lab environment - TCM Security SOC101 Network Security Challenge. All findings based on provided packet capture data.*
+*Investigation conducted in a controlled lab environment — TCM Security SOC101 Network Security Challenge. All findings based on provided packet capture data.*
