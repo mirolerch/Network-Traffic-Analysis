@@ -3,7 +3,7 @@
 **Report Title:** VoIP Traffic Analysis  
 **Analysis Type:** Network Traffic Analysis · Tshark · VoIP  
 **Analyst:** Miro Lerch  
-**Date:** 2024-06-16  
+**Date:** 2026-06-25  
 **Status:** Closed
 
 ---
@@ -51,11 +51,10 @@ tshark -r VoIP_traffic.pcap -Y "sip.Method==REGISTER"
 
 ### Source IP, Sender Extension & Auth Digest Response
 
-`-Tfields -e` extracts specific fields as columns — no grep needed. The digest response is the MD5 hash sent by the client to authenticate against the SIP server.
+`-Tfields -e` extracts specific fields as columns - no grep needed. The digest response is the MD5 hash sent by the client to authenticate against the SIP server.
 
 ```bash
-tshark -r VoIP_traffic.pcap -Y "sip.Method==REGISTER" \
-  -Tfields -e ip.src -e sip.from.user -e sip.auth.digest.response
+tshark -r VoIP_traffic.pcap -Y "sip.Method==REGISTER" -Tfields -e ip.src -e sip.from.user -e sip.auth.digest.response
 ```
 
 **Result:**
@@ -93,7 +92,7 @@ tshark -r VoIP_traffic.pcap -Y "sdp" -Tfields -e sdp.media
 
 ### IP Address of Zoiper VoIP Client
 
-`sip contains` performs a substring match against the entire SIP payload. The User-Agent field in SIP headers identifies the client software — here Zoiper.
+`sip contains` performs a substring match against the entire SIP payload. The User-Agent field in SIP headers identifies the client software - here Zoiper.
 
 ```bash
 tshark -r VoIP_traffic.pcap -Y "sip contains Zoiper" -Tfields -e ip.src
@@ -138,8 +137,7 @@ tshark -r VoIP_traffic.pcap -Y "sip.Method == MESSAGE" -V
 A BYE packet is only sent when a call was successfully established and then terminated. Filtering for BYE and extracting the from/to fields shows which extensions completed a full call.
 
 ```bash
-tshark -r VoIP_traffic.pcap -Y "sip.Method==BYE" \
-  -Tfields -e sip.from.user -e sip.to.user
+tshark -r VoIP_traffic.pcap -Y "sip.Method==BYE" -Tfields -e sip.from.user -e sip.to.user
 ```
 
 **Result:**
