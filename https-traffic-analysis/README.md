@@ -383,9 +383,9 @@ AND src_ip: NOT IN [known_av_update_servers]
 
 ## About This Project
 
-This project demonstrates the ability to conduct network forensics on encrypted HTTPS traffic — a core competency for SOC analysts and DFIR investigators. Rather than treating encrypted traffic as a dead end, protocol-level knowledge was applied to extract meaningful intelligence: endpoint mapping, certificate chain analysis, DNS behavior profiling, and passive software inventory via behavioral fingerprinting.
+This project demonstrates the ability to conduct network forensics on encrypted HTTPS traffic - a core competency for SOC analysts and DFIR investigators. Rather than treating encrypted traffic as a dead end, protocol-level knowledge was applied to extract meaningful intelligence: endpoint mapping, certificate chain analysis, DNS behavior profiling, and passive software inventory via behavioral fingerprinting.
 
-The project follows a real SOC case structure — from initial triage through IOC extraction, MITRE ATT&CK mapping, detection rule development, and documented IR recommendations.
+The project follows a real SOC case structure - from initial triage through IOC extraction, MITRE ATT&CK mapping, detection rule development, and documented IR recommendations.
 
 **Relevant for:** SOC Analyst L1/L2, Blue Team Analyst, Network Forensics Analyst, DFIR Analyst
 
