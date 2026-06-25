@@ -114,6 +114,8 @@ tshark -r VoIP_traffic.pcap -Y "sip.Method==REGISTER" -Tfields -e ip.dst
 
 **Result:** `208.51.63.146`
 
+![SIP Server](screenshots/09_place_calls.png)
+
 ---
 
 ### Content of Text Message Sent to +918108591527
