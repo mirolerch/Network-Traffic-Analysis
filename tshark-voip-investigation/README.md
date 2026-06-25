@@ -27,7 +27,7 @@
 
 ### Show VoIP Traffic
 
-VoIP traffic besteht aus zwei Protokollen: SIP übernimmt die Signalisierung (Verbindungsaufbau, Registrierung), RTP trägt den Audio-Stream. Mit `sip or rtp` werden beide kombiniert und alle VoIP-relevanten Pakete angezeigt.
+VoIP traffic consists of two protocols: SIP handles call signaling (registration, call setup), RTP carries the audio stream. Combining both filters displays all VoIP-relevant packets in the capture.
 
 ```bash
 tshark -r VoIP_traffic.pcap -Y "sip or rtp"
@@ -39,7 +39,7 @@ tshark -r VoIP_traffic.pcap -Y "sip or rtp"
 
 ### Print All REGISTER Packets
 
-REGISTER ist die SIP-Methode, mit der ein Client seinen aktuellen Standort beim SIP-Server anmeldet. Durch Filtern auf diese Methode werden alle Registrierungsversuche im Capture sichtbar.
+REGISTER is the SIP method a client uses to register its current location with the SIP server. Filtering for this method shows all registration attempts in the capture.
 
 ```bash
 tshark -r VoIP_traffic.pcap -Y "sip.Method==REGISTER"
@@ -51,7 +51,7 @@ tshark -r VoIP_traffic.pcap -Y "sip.Method==REGISTER"
 
 ### Source IP, Sender Extension & Auth Digest Response
 
-`-Tfields -e` extrahiert gezielt einzelne Felder als Spalten. Der Digest Response ist der MD5-Hash, den der Client zur Authentifizierung gegen den SIP-Server sendet.
+`-Tfields -e` extracts specific fields as columns — no grep needed. The digest response is the MD5 hash sent by the client to authenticate against the SIP server.
 
 ```bash
 tshark -r VoIP_traffic.pcap -Y "sip.Method==REGISTER" \
@@ -73,7 +73,7 @@ tshark -r VoIP_traffic.pcap -Y "sip.Method==REGISTER" \
 
 ### Codecs Used by RTP Protocol
 
-SDP (Session Description Protocol) ist in SIP-Paketen eingebettet und handelt die Audio-Codecs sowie Ports für den RTP-Stream aus. Der Filter `sdp` mit dem Feld `sdp.media` zeigt alle angebotenen Codecs.
+SDP (Session Description Protocol) is embedded in SIP packets and negotiates the audio codecs and ports for the RTP stream. The `sdp` filter with the `sdp.media` field shows all offered codecs.
 
 ```bash
 tshark -r VoIP_traffic.pcap -Y "sdp" -Tfields -e sdp.media
@@ -93,7 +93,7 @@ tshark -r VoIP_traffic.pcap -Y "sdp" -Tfields -e sdp.media
 
 ### IP Address of Zoiper VoIP Client
 
-`sip contains` führt einen Substring-Match gegen den gesamten SIP-Payload durch. Das User-Agent-Feld in SIP-Headern identifiziert die Client-Software — hier Zoiper.
+`sip contains` performs a substring match against the entire SIP payload. The User-Agent field in SIP headers identifies the client software — here Zoiper.
 
 ```bash
 tshark -r VoIP_traffic.pcap -Y "sip contains Zoiper" -Tfields -e ip.src
@@ -101,13 +101,13 @@ tshark -r VoIP_traffic.pcap -Y "sip contains Zoiper" -Tfields -e ip.src
 
 **Result:** `192.168.10.15`
 
-![Zoiper VoIP Client](screenshots/05__Zoiper_VoIP.png)
+![Zoiper VoIP Client](screenshots/05_Zoiper_VoIP.png)
 
 ---
 
 ### IP Address of SIP Server
 
-REGISTER-Pakete werden immer vom Client zum SIP-Server gesendet. Die Ziel-IP dieser Pakete identifiziert den Server.
+REGISTER packets are always sent from the client to the SIP server. Extracting the destination IP of REGISTER packets identifies the server.
 
 ```bash
 tshark -r VoIP_traffic.pcap -Y "sip.Method==REGISTER" -Tfields -e ip.dst
@@ -119,7 +119,7 @@ tshark -r VoIP_traffic.pcap -Y "sip.Method==REGISTER" -Tfields -e ip.dst
 
 ### Content of Text Message Sent to +918108591527
 
-Die SIP-Methode MESSAGE überträgt Sofortnachrichten über SIP. `-V` gibt das vollständig dekodierte Paket aus, einschließlich des Nachrichteninhalts im Klartext.
+The SIP MESSAGE method carries instant messages over SIP. `-V` prints the full decoded packet including the message body in plaintext.
 
 ```bash
 tshark -r VoIP_traffic.pcap -Y "sip.Method == MESSAGE" -V
@@ -127,15 +127,15 @@ tshark -r VoIP_traffic.pcap -Y "sip.Method == MESSAGE" -V
 
 **Result:** `Dude test text`
 
-![Send Message I](screenshots/06__send_message_I.png)
+![Send Message I](screenshots/06_send_message_I.png)
 
-![Send Message II](screenshots/07__send_message_II.png)
+![Send Message II](screenshots/07_send_message_II.png)
 
 ---
 
 ### Extensions That Completed a Call Successfully
 
-Ein BYE-Paket wird nur gesendet, wenn ein Anruf erfolgreich aufgebaut und dann beendet wurde. Durch Filtern auf BYE und Extrahieren der From/To-Felder werden die Extensions sichtbar, die einen vollständigen Call abgeschlossen haben.
+A BYE packet is only sent when a call was successfully established and then terminated. Filtering for BYE and extracting the from/to fields shows which extensions completed a full call.
 
 ```bash
 tshark -r VoIP_traffic.pcap -Y "sip.Method==BYE" \
